@@ -1,0 +1,29 @@
+function! _Qq(...)
+  let l:post = {'exit_cb': function('_QqPost')}
+  let l:args = ['_qq_vim', expand('%')] + a:000
+  call job_start(l:args, l:post)
+  echohl User1
+  echomsg 'qq...'
+  echohl None
+endfunction
+
+function! _QqPost(job, status)
+  let l:line = line('.')
+  let l:col = col('.')
+  edit
+  call cursor(l:line, l:col)
+endfunction
+
+function! _Qqq(...)
+  let l:p = system('_qqq_vim')
+  let l:p = substitute(l:p, '\n$', '', '')
+  execute 'edit ' . l:p
+endfunction
+
+command! -nargs=* Qq call _Qq()
+cnoreabbrev <expr> qq (getcmdtype() == ':' && getcmdline() =~ '^qq$')? 'call _Qq()' : 'qq'
+
+command! -nargs=* Qqq call _Qqq()
+cnoreabbrev <expr> qqq (getcmdtype() == ':' && getcmdline() =~ '^qqq$')? 'call _Qqq()' : 'qqq'
+cnoreabbrev <expr> qqqq (getcmdtype() == ':' && getcmdline() =~ '^qqqq$')? 'call _Qqq()' : 'qqqq'
+cnoreabbrev <expr> qqqqq (getcmdtype() == ':' && getcmdline() =~ '^qqqqq$')? 'call _Qqq()' : 'qqqqq'
