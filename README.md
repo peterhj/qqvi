@@ -23,7 +23,7 @@ In vim:
 2.  `:qqq` to load a fresh `qq` text file in the current buffer.
 3.  Edit your prompt after the `^Q^Q` escape chars.
 4.  `:qq` to submit your context window to a chat completions endpoint
-    (default: QwQ-32B-Preview via together.ai).
+    (default model: [QwQ-32B-Preview via together.ai](https://api.together.ai/models/Qwen/QwQ-32B-Preview)).
 5.  Wait a little bit.
 6.  The current buffer will auto reload to display the new context
     window, with the assistant response after the `^A^A` escape chars.
