@@ -15,6 +15,8 @@ cp -pv qq_vim.py ~/.local/bin/_qq_vim
 cp -pv qqq_vim.py ~/.local/bin/_qqq_vim
 ```
 
+You should also ensure that `$HOME/.local/bin` is in your `$PATH`.
+
 ## Usage
 
 In vim:
