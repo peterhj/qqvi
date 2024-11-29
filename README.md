@@ -31,6 +31,11 @@ In vim:
     file.
 7.  Repeat (3)-(6).
 
+## See also
+
+- [Christoffer Stjernlöf's q script](https://entropicthoughts.com/q)
+  (based on [Simon Willison's llm tool](https://simonwillison.net/2024/Aug/7/q-what-do-i-title-this-article/))
+
 ## License
 
 MIT License
