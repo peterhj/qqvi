@@ -45,7 +45,7 @@ def _load_conf():
         }
         conf["aliases"] = {
             "llama": "llama-3.1-405b-instruct-quant8",
-            "qwq": "qwen-qwq-32b-preview",
+            "qwq": "qwq-32b-preview",
             "sonnet": "claude-3.5-sonnet-20241022",
         }
         try:
@@ -133,7 +133,7 @@ class InferenceEndpoint:
     @classmethod
     def together_qwen_qwq_32b_preview(cls) -> Any:
         return cls.together(
-            model = "qwen-qwq-32b-preview",
+            model = "qwq-32b-preview",
             endpoint_model = "Qwen/QwQ-32B-Preview",
             endpoint_max_tokens = 16384,
             #endpoint_max_tokens = 32768,
@@ -181,6 +181,14 @@ class InferenceEndpoint:
                 messages = messages[1:]
             else:
                 system_prompt = None
+        if self.model == "qwq-32b-preview":
+            messages.append(
+                {
+                    "role": "assistant",
+                    #"content": "Let's plan step-by-step and review the steps.",
+                    "content": "Let's plan our steps and review the steps.",
+                }
+            )
         if (
             self.endpoint_protocol == "anthropic" or
             self.endpoint_protocol == "deepseek" or
@@ -290,6 +298,8 @@ class InferenceLog(InferenceEndpoint):
 
         with open(src_path, "a") as f:
             print(f"\n\n{AA_PAT}", file=f)
+            if messages[-1]["role"] == "assistant":
+                print(messages[-1]["content"], end="", file=f)
             print(response, file=f)
             if len(response) > 0 and response[-1] != "\n":
                 print("", file=f)
@@ -381,7 +391,7 @@ def main():
 
     if model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
-    elif model == "qwen-qwq-32b-preview":
+    elif model == "qwq-32b-preview":
         endpoint = InferenceLog.together_qwen_qwq_32b_preview()
     elif model == "claude-3.5-sonnet-20241022":
         endpoint = InferenceLog.claude_3_5_sonnet_20241022()

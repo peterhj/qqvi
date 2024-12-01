@@ -1,0 +1,7 @@
+[default]
+model = qwq
+
+[aliases]
+llama     = llama-3.1-405b-instruct-quant8
+qwq       = qwq-32b-preview
+sonnet    = claude-3.5-sonnet-20241022

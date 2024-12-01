@@ -17,7 +17,18 @@ cp -pv qqq_vim.py ~/.local/bin/_qqq_vim
 
 You should also ensure that `$HOME/.local/bin` is in your `$PATH`.
 
+### Install extras (optional)
+
+```sh
+mkdir -p ~/.qq
+cp -pv conf.example ~/.qq/conf
+```
+
 ## Usage
+
+Configure endpoint API tokens either via environment variables
+(e.g. `$TOGETHER_API_KEY`, `$ANTHROPIC_API_KEY`, etc.) or via
+text files located in `~/.qq/api_tokens`.
 
 In vim:
 

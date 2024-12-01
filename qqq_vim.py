@@ -23,8 +23,14 @@ def main():
         ctr = 0
     ctr += 1
     txtp = os.path.join(CACHE_DIR, f"{ctr}.txt")
-    with open(txtp, "w") as f:
+    try:
+        f = open(txtp, "w")
+    except OSError:
+        os.makedirs(CACHE_DIR, exist_ok=True)
+        f = open(txtp, "w")
+    finally:
         print(f"{QQ_PAT} ", file=f, flush=True)
+        f.close()
     with open(ctrp, "w") as f:
         print(json.dumps({"t0": t0, "ctr": ctr}), file=f, flush=True)
     print(txtp)
