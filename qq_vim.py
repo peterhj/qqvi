@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from typing import Any, Dict, List, Optional, Tuple
+from argparse import Namespace
 from configparser import ConfigParser
 from dataclasses import dataclass
 from datetime import datetime
@@ -8,13 +9,15 @@ import json
 import os
 import shutil
 import sys
+import traceback
 import urllib.request
 
 HOME = os.environ["HOME"]
 LOG_DIR = os.path.join(HOME, ".qq", "log")
-CACHE_DIR = os.path.join(HOME, ".qq", "cache")
 API_TOKENS_DIR = os.path.join(HOME, ".qq", "api_tokens")
 CONF_PATH = os.path.join(HOME, ".qq", "conf")
+
+_EXTRA_LOG_DIR = os.environ.get("QQ_EXTRA_LOG_DIR", None)
 
 def _load_api_token(key, domain):
     env_key = "{}_API_KEY".format(key)
@@ -106,9 +109,9 @@ class InferenceEndpoint:
         )
 
     @classmethod
-    def deepseek_v2_5_chat(cls) -> Any:
+    def deepseek_v2_5_chat_20241210(cls) -> Any:
         return cls.deepseek(
-            model = "deepseek-v2.5-chat",
+            model = "deepseek-v2.5-chat-20241210",
             endpoint_model = "deepseek-chat",
             endpoint_max_tokens = 4096,
         )
@@ -235,7 +238,6 @@ class InferenceEndpoint:
 class InferenceLog(InferenceEndpoint):
     def __post_init__(self) -> None:
         super().__post_init__()
-        self._base_dir = os.path.join(LOG_DIR, self.model)
 
     def query(self, messages: List[Dict[str, str]], src_path: str = None) -> Tuple[str, Any, Any]:
         t0 = datetime.utcnow()
@@ -245,23 +247,45 @@ class InferenceLog(InferenceEndpoint):
 
         src_name = os.path.basename(src_path)
 
-        log_name = "{}.{}.log.json".format(src_name, timestamp)
-        log_path = os.path.join(self._base_dir, log_name)
-        log_link = os.path.join(self._base_dir, "{}.latest.log.json".format(src_name))
+        log_dirs = [LOG_DIR]
+        if _EXTRA_LOG_DIR is not None:
+            log_dirs.append(_EXTRA_LOG_DIR)
 
-        in_name = "{}.{}.in.txt".format(src_name, timestamp)
-        in_path = os.path.join(self._base_dir, in_name)
-        in_link = os.path.join(self._base_dir, "{}.latest.in.txt".format(src_name))
+        log_meta = dict()
 
-        out_name = "{}.{}.in.txt".format(src_name, timestamp)
-        out_path = os.path.join(self._base_dir, out_name)
-        out_link = os.path.join(self._base_dir, "{}.latest.out.txt".format(src_name))
+        for log_dir in log_dirs:
+            log_meta[log_dir] = Namespace(**{
+                "base_dir": None,
+                "log_name": None,
+                "log_path": None,
+                "log_link": None,
+                "in_name": None,
+                "in_path": None,
+                "in_link": None,
+                "out_name": None,
+                "out_path": None,
+                "out_link": None,
+            })
 
-        try:
-            shutil.copyfile(src_path, in_path)
-        except OSError:
-            os.makedirs(LOG_DIR, exist_ok=True)
-            shutil.copyfile(src_path, in_path)
+            base_dir = os.path.join(log_dir, self.model)
+
+            log_meta[log_dir].log_name = "{}.{}.log.json".format(src_name, timestamp)
+            log_meta[log_dir].log_path = os.path.join(base_dir, log_meta[log_dir].log_name)
+            log_meta[log_dir].log_link = os.path.join(base_dir, "{}.latest.log.json".format(src_name))
+
+            log_meta[log_dir].in_name = "{}.{}.in.txt".format(src_name, timestamp)
+            log_meta[log_dir].in_path = os.path.join(base_dir, log_meta[log_dir].in_name)
+            log_meta[log_dir].in_link = os.path.join(base_dir, "{}.latest.in.txt".format(src_name))
+
+            log_meta[log_dir].out_name = "{}.{}.in.txt".format(src_name, timestamp)
+            log_meta[log_dir].out_path = os.path.join(base_dir, log_meta[log_dir].out_name)
+            log_meta[log_dir].out_link = os.path.join(base_dir, "{}.latest.out.txt".format(src_name))
+
+            try:
+                shutil.copyfile(src_path, log_meta[log_dir].in_path)
+            except OSError:
+                os.makedirs(base_dir, exist_ok=True)
+                shutil.copyfile(src_path, log_meta[log_dir].in_path)
 
         response, res_body, t1 = super().query(messages)
 
@@ -271,23 +295,25 @@ class InferenceLog(InferenceEndpoint):
             "messages": messages,
             "response": res_body,
         }
-        with open(log_path, "w") as f:
-            print(json.dumps(log_item, indent=2), file=f, flush=True)
 
-        try:
-            os.remove(log_link)
-        except FileNotFoundError:
-            pass
-        try:
-            os.remove(in_link)
-        except FileNotFoundError:
-            pass
-        try:
-            os.remove(out_link)
-        except FileNotFoundError:
-            pass
+        for log_dir in log_dirs:
+            with open(log_meta[log_dir].log_path, "w") as f:
+                print(json.dumps(log_item, indent=2), file=f, flush=True)
 
-        os.symlink(log_name, log_link)
+            try:
+                os.remove(log_meta[log_dir].log_link)
+            except FileNotFoundError:
+                pass
+            try:
+                os.remove(log_meta[log_dir].in_link)
+            except FileNotFoundError:
+                pass
+            try:
+                os.remove(log_meta[log_dir].out_link)
+            except FileNotFoundError:
+                pass
+
+            os.symlink(log_meta[log_dir].log_name, log_meta[log_dir].log_link)
 
         if response.find(chr(0x11)) >= 0:
             print(f"DEBUG: found control char in response (0x11)")
@@ -305,15 +331,16 @@ class InferenceLog(InferenceEndpoint):
                 print("", file=f)
             print(f"\n{QQ_PAT} ", file=f, flush=True)
 
-        os.symlink(in_name, in_link)
+        for log_dir in log_dirs:
+            os.symlink(log_meta[log_dir].in_name, log_meta[log_dir].in_link)
 
-        try:
-            shutil.copyfile(src_path, out_path)
-        except OSError:
-            os.makedirs(LOG_DIR, exist_ok=True)
-            shutil.copyfile(src_path, out_path)
+            try:
+                shutil.copyfile(src_path, log_meta[log_dir].out_path)
+            except OSError:
+                os.makedirs(log_dir, exist_ok=True)
+                shutil.copyfile(src_path, log_meta[log_dir].out_path)
 
-        os.symlink(out_name, out_link)
+            os.symlink(log_meta[log_dir].out_name, log_meta[log_dir].out_link)
 
         return response, res_body, t1
 
@@ -346,8 +373,6 @@ def main():
     aa_pos = -1
     messages = []
 
-    # TODO: system message.
-
     while len(haystack) > 0:
         qq_pos = haystack.find(QQ_PAT)
         if aa_pos < 0 and qq_pos > 0:
@@ -363,33 +388,38 @@ def main():
                 a_end = len(haystack)
             else:
                 a_end = qq_pos
-            a_text = haystack[2:a_end].strip()
+            a_text = haystack[:a_end].strip()
             print(f"DEBUG: message[{len(messages)}]: role = \"assistant\"")
             messages.append({
                 "role": "assistant",
-                "content": q_text,
+                "content": a_text,
             })
         if qq_pos < 0:
             break
-
         haystack = haystack[qq_pos+2:]
+
         aa_pos = haystack.find(AA_PAT)
         if aa_pos < 0:
-            aa_pos = len(haystack)
-        q_text = haystack[:aa_pos].strip()
+            q_end = len(haystack)
+        else:
+            q_end = aa_pos
+        q_text = haystack[:q_end].strip()
         print(f"DEBUG: message[{len(messages)}]: role = \"user\"")
         messages.append({
             "role": "user",
             "content": q_text,
         })
-
-        haystack = haystack[aa_pos:]
+        if aa_pos < 0:
+            break
+        haystack = haystack[aa_pos+2:]
 
     if len(messages) <= 0:
         print(f"DEBUG: no messages")
         return
 
-    if model == "llama-3.1-405b-instruct-quant8":
+    if model == "deepseek-v2.5-chat-20241210":
+        endpoint = InferenceLog.deepseek_v2_5_chat_20241210()
+    elif model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
     elif model == "qwq-32b-preview":
         endpoint = InferenceLog.together_qwen_qwq_32b_preview()
@@ -403,6 +433,7 @@ def main():
         endpoint.query(messages, sys.argv[1])
     except Exception as e:
         print(f"DEBUG: endpoint query: except: {e}")
+        print(traceback.format_exc())
         return
 
 if __name__ == "__main__":
