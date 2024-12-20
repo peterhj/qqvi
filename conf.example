@@ -1,5 +1,5 @@
 [default]
-model = qwq
+model = deepseek
 
 [aliases]
 deepseek  = deepseek-v2.5-chat-20241210
