@@ -205,6 +205,7 @@ class InferenceEndpoint:
                 # TODO: configure sampling params.
                 "temperature": 0,
                 "top_p": 1,
+                "logprobs": True,
             }
         else:
             raise NotImplementedError
