@@ -3,7 +3,7 @@ model = deepseek
 
 [aliases]
 claude    = claude-3.5-sonnet-20241022
-deepseek  = deepseek-v2.5-chat-20241210
+deepseek  = deepseek-v3-chat-preview-20241225
 llama     = llama-3.1-405b-instruct-quant8
 qwq       = qwq-32b-preview
 sonnet    = claude-3.5-sonnet-20241022

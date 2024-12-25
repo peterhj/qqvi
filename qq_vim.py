@@ -34,6 +34,7 @@ def _load_api_token(key, domain):
 
 ANTHROPIC_API_TOKEN = _load_api_token("ANTHROPIC", "anthropic.com")
 DEEPSEEK_API_TOKEN  = _load_api_token("DEEPSEEK",  "deepseek.com")
+GEMINI_API_TOKEN    = _load_api_token("GEMINI",    "aistudio.google.com")
 TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",  "together.ai")
 
 def _load_conf():
@@ -109,6 +110,14 @@ class InferenceEndpoint:
         )
 
     @classmethod
+    def deepseek_v3_chat_preview_20241225(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-v3-chat-preview-20241225",
+            endpoint_model = "deepseek-chat",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
     def deepseek_v2_5_chat_20241210(cls) -> Any:
         return cls.deepseek(
             model = "deepseek-v2.5-chat-20241210",
@@ -174,6 +183,17 @@ class InferenceEndpoint:
                 "Content-Type": "application/json",
                 "Accept": "application/json",
             }
+        elif self.endpoint_protocol == "gemini":
+            self._chat_endpoint_url = "{}/v1beta/models/{}:generateContent?key={}".format(
+                self.endpoint_api_url,
+                self.endpoint_model,
+                self.endpoint_api_token,
+            )
+            self._chat_endpoint_headers = {
+                "User-Agent": "curl/8.7.1",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
         else:
             raise NotImplementedError
 
@@ -207,6 +227,19 @@ class InferenceEndpoint:
                 "top_p": 1,
                 "logprobs": True,
             }
+        elif self.endpoint_protocol == "gemini":
+            # TODO
+            req_body = {
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text": messages[-1]["content"],
+                            }
+                        ],
+                    }
+                ],
+            }
         else:
             raise NotImplementedError
         if (
@@ -231,6 +264,8 @@ class InferenceEndpoint:
             self.endpoint_protocol == "openai"
         ):
             response = res_body["choices"][0]["message"]["content"]
+        elif self.endpoint_protocol == "gemini":
+            response = res_body["candidates"][0]["parts"][-1]["text"]
         else:
             raise NotImplementedError
         return response, res_body, t1
@@ -418,8 +453,8 @@ def main():
         print(f"DEBUG: no messages")
         return
 
-    if model == "deepseek-v2.5-chat-20241210":
-        endpoint = InferenceLog.deepseek_v2_5_chat_20241210()
+    if model == "deepseek-v3-chat-preview-20241225":
+        endpoint = InferenceLog.deepseek_v3_chat_preview_20241225()
     elif model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
     elif model == "qwq-32b-preview":
