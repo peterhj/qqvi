@@ -101,20 +101,19 @@ class InferenceEndpoint:
     @classmethod
     def deepseek(cls, **kwargs) -> Any:
         return cls(
-            # FIXME: beta API for 8192 max tokens.
             endpoint_api_url = "https://api.deepseek.com",
-            #endpoint_api_url = "https://api.deepseek.com/beta",
             endpoint_api_token = DEEPSEEK_API_TOKEN,
             endpoint_protocol = "deepseek",
             **kwargs,
         )
 
     @classmethod
-    def deepseek_v3_chat_preview_20241225(cls) -> Any:
+    def deepseek_v3_chat_20241226(cls) -> Any:
         return cls.deepseek(
-            model = "deepseek-v3-chat-preview-20241225",
+            model = "deepseek-v3-chat-20241226",
             endpoint_model = "deepseek-chat",
-            endpoint_max_tokens = 4096,
+            endpoint_max_tokens = 8192,
+            endpoint_max_context_len = 65356,
         )
 
     @classmethod
@@ -453,8 +452,8 @@ def main():
         print(f"DEBUG: no messages")
         return
 
-    if model == "deepseek-v3-chat-preview-20241225":
-        endpoint = InferenceLog.deepseek_v3_chat_preview_20241225()
+    if model == "deepseek-v3-chat-20241226":
+        endpoint = InferenceLog.deepseek_v3_chat_20241226()
     elif model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
     elif model == "qwq-32b-preview":
