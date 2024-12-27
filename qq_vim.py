@@ -113,7 +113,7 @@ class InferenceEndpoint:
             model = "deepseek-v3-chat-20241226",
             endpoint_model = "deepseek-chat",
             endpoint_max_tokens = 8192,
-            endpoint_max_context_len = 65356,
+            #endpoint_max_context_len = 65536,
         )
 
     @classmethod
