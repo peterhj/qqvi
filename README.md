@@ -27,8 +27,8 @@ cp -pv conf.example ~/.qq/conf
 ## Usage
 
 Configure endpoint API tokens either via environment variables
-(e.g. `$TOGETHER_API_KEY`, `$ANTHROPIC_API_KEY`, etc.) or via
-text files located in `~/.qq/api_tokens`.
+(e.g. `$DEEPSEEK_API_KEY`, `$ANTHROPIC_API_KEY`, `$TOGETHER_API_KEY`, etc.)
+or via text files located in `~/.qq/api_tokens`.
 
 In vim:
 
@@ -36,7 +36,7 @@ In vim:
 2.  `:qqq` to load a fresh `qq` text file in the current buffer.
 3.  Edit your prompt after the `^Q^Q` escape chars.
 4.  `:qq` to submit your context window to a chat completions endpoint
-    (default model: [QwQ-32B-Preview via together.ai](https://api.together.ai/models/Qwen/QwQ-32B-Preview)).
+    (default model: [DeepSeek-V3](https://api-docs.deepseek.com/)).
 5.  Wait a little bit.
 6.  The current buffer will auto reload to display the new context
     window, with the assistant response after the `^A^A` escape chars.
