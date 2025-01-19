@@ -35,6 +35,7 @@ def _load_api_token(key, domain):
 ANTHROPIC_API_TOKEN = _load_api_token("ANTHROPIC", "anthropic.com")
 DEEPSEEK_API_TOKEN  = _load_api_token("DEEPSEEK",  "deepseek.com")
 GEMINI_API_TOKEN    = _load_api_token("GEMINI",    "aistudio.google.com")
+HYPERBOLIC_API_TOKEN = _load_api_token("HYPERBOLIC", "hyperbolic.xyz")
 TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",  "together.ai")
 
 def _load_conf():
@@ -125,12 +126,45 @@ class InferenceEndpoint:
         )
 
     @classmethod
+    def hyperbolic(cls, **kwargs) -> Any:
+        return cls(
+            endpoint_api_url = "https://api.hyperbolic.xyz",
+            endpoint_api_token = HYPERBOLIC_API_TOKEN,
+            endpoint_protocol = "openai",
+            **kwargs,
+        )
+
+    @classmethod
+    def hyperbolic_llama_3_1_405b_base_bf16(cls) -> Any:
+        return cls.hyperbolic(
+            model = "llama-3.1-405b-base",
+            endpoint_model = "meta-llama/Meta-Llama-3.1-405B",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_llama_3_1_405b_base_fp8(cls) -> Any:
+        return cls.hyperbolic(
+            model = "llama-3.1-405b-base-fp8",
+            endpoint_model = "meta-llama/Meta-Llama-3.1-405B-FP8",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
     def together(cls, **kwargs) -> Any:
         return cls(
             endpoint_api_url = "https://api.together.xyz",
             endpoint_api_token = TOGETHER_API_TOKEN,
             endpoint_protocol = "openai",
             **kwargs,
+        )
+
+    @classmethod
+    def together_deepseek_v3(cls) -> Any:
+        return cls.together(
+            model = "deepseek-v3",
+            endpoint_model = "deepseek-ai/DeepSeek-V3",
+            endpoint_max_tokens = 8192,
         )
 
     @classmethod
