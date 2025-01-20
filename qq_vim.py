@@ -46,11 +46,13 @@ def _load_conf():
     except Exception:
         conf = ConfigParser()
         conf["default"] = {
-            "model": "qwq",
+            "model": "deepseek-r1",
         }
         conf["aliases"] = {
+            "claude": "claude-3.5-sonnet-20241022",
+            "deepseek": "deepseek-v3-chat-20241226",
+            "deepseek-r1": "deepseek-r1-20250120",
             "llama": "llama-3.1-405b-instruct-quant8",
-            "qwq": "qwq-32b-preview",
             "sonnet": "claude-3.5-sonnet-20241022",
         }
         try:
@@ -106,6 +108,15 @@ class InferenceEndpoint:
             endpoint_api_token = DEEPSEEK_API_TOKEN,
             endpoint_protocol = "deepseek",
             **kwargs,
+        )
+
+    @classmethod
+    def deepseek_r1_20250120(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-r1-20250120",
+            endpoint_model = "deepseek-reasoner",
+            endpoint_max_tokens = 8192,
+            #endpoint_max_context_len = 65536,
         )
 
     @classmethod
@@ -488,6 +499,8 @@ def main():
 
     if model == "deepseek-v3-chat-20241226":
         endpoint = InferenceLog.deepseek_v3_chat_20241226()
+    elif model == "deepseek-r1-20250120":
+        endpoint = InferenceLog.deepseek_r1_20250120()
     elif model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
     elif model == "qwq-32b-preview":

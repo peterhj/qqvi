@@ -1,9 +1,9 @@
 [default]
-model = deepseek
+model = deepseek-r1
 
 [aliases]
-claude    = claude-3.5-sonnet-20241022
-deepseek  = deepseek-v3-chat-20241226
-llama     = llama-3.1-405b-instruct-quant8
-qwq       = qwq-32b-preview
-sonnet    = claude-3.5-sonnet-20241022
+claude      = claude-3.5-sonnet-20241022
+deepseek    = deepseek-v3-chat-20241226
+deepseek-r1 = deepseek-r1-20250120
+llama       = llama-3.1-405b-instruct-quant8
+sonnet      = claude-3.5-sonnet-20241022
