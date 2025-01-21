@@ -266,11 +266,17 @@ class InferenceEndpoint:
                 "model": self.endpoint_model,
                 "stream": False,
                 "max_tokens": self.endpoint_max_tokens,
-                # TODO: configure sampling params.
-                "temperature": 0,
-                "top_p": 1,
-                "logprobs": True,
             }
+            if not (
+                self.endpoint_protocol == "deepseek" and
+                self.endpoint_model == "deepseek-reasoner"
+            ):
+                req_body |= {
+                    # TODO: configure sampling params.
+                    "temperature": 0,
+                    "top_p": 1,
+                    "logprobs": True,
+                }
         elif self.endpoint_protocol == "gemini":
             # TODO
             req_body = {
