@@ -313,7 +313,13 @@ class InferenceEndpoint:
             self.endpoint_protocol == "deepseek" or
             self.endpoint_protocol == "openai"
         ):
-            response = res_body["choices"][0]["message"]["content"]
+            if "reasoning_content" in res_body["choices"][0]["message"]:
+                response = "<think>\n{}\n</think>\n\n{}".format(
+                    res_body["choices"][0]["message"]["reasoning_content"],
+                    res_body["choices"][0]["message"]["content"],
+                )
+            else:
+                response = res_body["choices"][0]["message"]["content"]
         elif self.endpoint_protocol == "gemini":
             response = res_body["candidates"][0]["parts"][-1]["text"]
         else:
@@ -363,7 +369,7 @@ class InferenceLog(InferenceEndpoint):
             log_meta[log_dir].in_path = os.path.join(base_dir, log_meta[log_dir].in_name)
             log_meta[log_dir].in_link = os.path.join(base_dir, "{}.latest.in.txt".format(src_name))
 
-            log_meta[log_dir].out_name = "{}.{}.in.txt".format(src_name, timestamp)
+            log_meta[log_dir].out_name = "{}.{}.out.txt".format(src_name, timestamp)
             log_meta[log_dir].out_path = os.path.join(base_dir, log_meta[log_dir].out_name)
             log_meta[log_dir].out_link = os.path.join(base_dir, "{}.latest.out.txt".format(src_name))
 
@@ -411,6 +417,8 @@ class InferenceLog(InferenceEndpoint):
         with open(src_path, "a") as f:
             print(f"\n\n{AA_PAT}", file=f)
             if messages[-1]["role"] == "assistant":
+                if "reasoning_content" in messages[-1]:
+                    print("<think>\n{}\n</think>\n".format(messages[-1]["reasoning_content"]), end="", file=f)
                 print(messages[-1]["content"], end="", file=f)
             print(response, file=f)
             if len(response) > 0 and response[-1] != "\n":
