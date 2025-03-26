@@ -49,11 +49,11 @@ def _load_conf():
             "model": "deepseek-r1",
         }
         conf["aliases"] = {
-            "claude": "claude-3.5-sonnet-20241022",
-            "deepseek": "deepseek-v3-chat-20241226",
+            "claude": "claude-3.7-sonnet-20250219",
+            "deepseek": "deepseek-v3-chat-20250324",
             "deepseek-r1": "deepseek-r1-20250120",
             "llama": "llama-3.1-405b-instruct-quant8",
-            "sonnet": "claude-3.5-sonnet-20241022",
+            "sonnet": "claude-3.7-sonnet-20250219",
         }
         try:
             with open(CONF_PATH, "w") as conf_file:
@@ -83,6 +83,14 @@ class InferenceEndpoint:
             endpoint_api_token = ANTHROPIC_API_TOKEN,
             endpoint_protocol = "anthropic",
             **kwargs,
+        )
+
+    @classmethod
+    def claude_3_7_sonnet_20250219(cls) -> Any:
+        return cls.anthropic(
+            model = "claude-3.7-sonnet-20250219",
+            endpoint_model = "claude-3-7-sonnet-20250219",
+            endpoint_max_tokens = 8192,
         )
 
     @classmethod
@@ -120,6 +128,15 @@ class InferenceEndpoint:
         )
 
     @classmethod
+    def deepseek_v3_chat_20250324(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-v3-chat-20250324",
+            endpoint_model = "deepseek-chat",
+            endpoint_max_tokens = 8192,
+            #endpoint_max_context_len = 65536,
+        )
+
+    @classmethod
     def deepseek_v3_chat_20241226(cls) -> Any:
         return cls.deepseek(
             model = "deepseek-v3-chat-20241226",
@@ -143,6 +160,38 @@ class InferenceEndpoint:
             endpoint_api_token = HYPERBOLIC_API_TOKEN,
             endpoint_protocol = "openai",
             **kwargs,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_r1_20250120(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-r1-20250120",
+            endpoint_model = "deepseek-ai/DeepSeek-R1",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_r1_zero_20250120(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-r1-zero-20250120",
+            endpoint_model = "deepseek-ai/DeepSeek-R1-Zero",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_v3_20250324(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-v3-20250324",
+            endpoint_model = "deepseek-ai/DeepSeek-V3-0324",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_v3_20241226(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-v3-20241226",
+            endpoint_model = "deepseek-ai/DeepSeek-V3",
+            endpoint_max_tokens = 4096,
         )
 
     @classmethod
@@ -267,10 +316,20 @@ class InferenceEndpoint:
                 "stream": False,
                 "max_tokens": self.endpoint_max_tokens,
             }
-            if not (
+            if (
                 self.endpoint_protocol == "deepseek" and
                 self.endpoint_model == "deepseek-reasoner"
             ):
+                pass
+            elif (
+                self.endpoint_protocol == "deepseek"
+            ):
+                req_body |= {
+                    # TODO: configure sampling params.
+                    "temperature": 0,
+                    #"top_p": 1,
+                }
+            else:
                 req_body |= {
                     # TODO: configure sampling params.
                     "temperature": 0,
@@ -511,10 +570,18 @@ def main():
         print(f"DEBUG: no messages")
         return
 
-    if model == "deepseek-v3-chat-20241226":
-        endpoint = InferenceLog.deepseek_v3_chat_20241226()
+    if model == "deepseek-v3-chat-20250324":
+        endpoint = InferenceLog.deepseek_v3_chat_20250324()
     elif model == "deepseek-r1-20250120":
         endpoint = InferenceLog.deepseek_r1_20250120()
+    elif model == "hyperbolic-deepseek-v3-20250324":
+        endpoint = InferenceLog.hyperbolic_deepseek_v3_20250324()
+    elif model == "hyperbolic-deepseek-v3-20241226":
+        endpoint = InferenceLog.hyperbolic_deepseek_v3_20241226()
+    elif model == "hyperbolic-deepseek-r1-20250120":
+        endpoint = InferenceLog.hyperbolic_deepseek_r1_20250120()
+    elif model == "together-deepseek-v3-20241226":
+        endpoint = InferenceLog.together_deepseek_v3_20241226()
     elif model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
     elif model == "qwq-32b-preview":
