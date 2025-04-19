@@ -32,11 +32,14 @@ def _load_api_token(key, domain):
             pass
     return api_token
 
-ANTHROPIC_API_TOKEN = _load_api_token("ANTHROPIC", "anthropic.com")
-DEEPSEEK_API_TOKEN  = _load_api_token("DEEPSEEK",  "deepseek.com")
-GEMINI_API_TOKEN    = _load_api_token("GEMINI",    "aistudio.google.com")
+ANTHROPIC_API_TOKEN = _load_api_token("ANTHROPIC",  "anthropic.com")
+DEEPSEEK_API_TOKEN  = _load_api_token("DEEPSEEK",   "deepseek.com")
+GEMINI_API_TOKEN    = _load_api_token("GEMINI",     "aistudio.google.com")
 HYPERBOLIC_API_TOKEN = _load_api_token("HYPERBOLIC", "hyperbolic.xyz")
-TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",  "together.ai")
+OPENAI_API_TOKEN    = _load_api_token("OPENAI",     "openai.com")
+OPENROUTER_API_TOKEN = _load_api_token("OPENROUTER", "openrouter.ai")
+TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",   "together.ai")
+XAI_API_TOKEN       = _load_api_token("XAI",        "x.ai")
 
 def _load_conf():
     conf = ConfigParser()
@@ -75,6 +78,7 @@ class InferenceEndpoint:
     endpoint_api_url: str
     endpoint_api_token: str
     endpoint_protocol: str
+    endpoint_extra_params: Optional[dict] = None
 
     @classmethod
     def anthropic(cls, **kwargs) -> Any:
@@ -244,6 +248,34 @@ class InferenceEndpoint:
             #endpoint_max_tokens = 32768,
         )
 
+    @classmethod
+    def xai(cls, **kwargs) -> Any:
+        return cls(
+            endpoint_api_url = "https://api.x.ai",
+            endpoint_api_token = XAI_API_TOKEN,
+            endpoint_protocol = "openai",
+            **kwargs,
+        )
+
+    @classmethod
+    def grok_3_mini_beta(cls) -> Any:
+        return cls.xai(
+            model = "grok-3-mini-beta-20250418",
+            endpoint_model = "grok-3-mini-beta",
+            endpoint_max_tokens = 32768,
+            endpoint_extra_params = {
+                "reasoning_effort": "high",
+            },
+        )
+
+    @classmethod
+    def grok_3_beta(cls) -> Any:
+        return cls.xai(
+            model = "grok-3-beta-20250418",
+            endpoint_model = "grok-3-beta",
+            endpoint_max_tokens = 32768,
+        )
+
     def __post_init__(self) -> None:
         if self.model is None:
             self.model = self.endpoint_model
@@ -356,6 +388,8 @@ class InferenceEndpoint:
             system_prompt is not None
         ):
             req_body["system"] = system_prompt
+        if self.endpoint_extra_params is not None:
+            req_body |= self.endpoint_extra_params
         req_data = json.dumps(req_body).encode("utf-8")
         req = urllib.request.Request(
             self._chat_endpoint_url,
@@ -588,6 +622,8 @@ def main():
         endpoint = InferenceLog.together_qwen_qwq_32b_preview()
     elif model == "claude-3.5-sonnet-20241022":
         endpoint = InferenceLog.claude_3_5_sonnet_20241022()
+    elif model == "grok-3-mini-beta":
+        endpoint = InferenceLog.grok_3_mini_beta()
     else:
         print(f"DEBUG: unsupported model = {repr(model)}")
         return
