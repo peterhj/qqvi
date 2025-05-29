@@ -54,7 +54,7 @@ def _load_conf():
         conf["aliases"] = {
             "claude": "claude-3.7-sonnet-20250219",
             "deepseek": "deepseek-v3-chat-20250324",
-            "deepseek-r1": "deepseek-r1-20250120",
+            "deepseek-r1": "deepseek-r1-20250528",
             "llama": "llama-3.1-405b-instruct-quant8",
             "sonnet": "claude-3.7-sonnet-20250219",
         }
@@ -120,6 +120,15 @@ class InferenceEndpoint:
             endpoint_api_token = DEEPSEEK_API_TOKEN,
             endpoint_protocol = "deepseek",
             **kwargs,
+        )
+
+    @classmethod
+    def deepseek_r1_20250528(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-r1-20250528",
+            endpoint_model = "deepseek-reasoner",
+            endpoint_max_tokens = 8192,
+            #endpoint_max_context_len = 65536,
         )
 
     @classmethod
@@ -258,14 +267,35 @@ class InferenceEndpoint:
         )
 
     @classmethod
+    def grok_3_mini(cls) -> Any:
+        return cls.xai(
+            model = "grok-3-mini-20250520",
+            endpoint_model = "grok-3-mini",
+            endpoint_max_tokens = 131072,
+            endpoint_extra_params = {
+                "reasoning_effort": "high",
+            },
+        )
+
+    @classmethod
     def grok_3_mini_beta(cls) -> Any:
         return cls.xai(
             model = "grok-3-mini-beta-20250418",
             endpoint_model = "grok-3-mini-beta",
-            endpoint_max_tokens = 32768,
+            #endpoint_max_tokens = 32768,
+            #endpoint_max_tokens = 65536,
+            endpoint_max_tokens = 131072,
             endpoint_extra_params = {
                 "reasoning_effort": "high",
             },
+        )
+
+    @classmethod
+    def grok_3(cls) -> Any:
+        return cls.xai(
+            model = "grok-3-beta-20250520",
+            endpoint_model = "grok-3",
+            endpoint_max_tokens = 131072,
         )
 
     @classmethod
@@ -273,7 +303,9 @@ class InferenceEndpoint:
         return cls.xai(
             model = "grok-3-beta-20250418",
             endpoint_model = "grok-3-beta",
-            endpoint_max_tokens = 32768,
+            #endpoint_max_tokens = 32768,
+            #endpoint_max_tokens = 65536,
+            endpoint_max_tokens = 131072,
         )
 
     def __post_init__(self) -> None:
@@ -606,8 +638,8 @@ def main():
 
     if model == "deepseek-v3-chat-20250324":
         endpoint = InferenceLog.deepseek_v3_chat_20250324()
-    elif model == "deepseek-r1-20250120":
-        endpoint = InferenceLog.deepseek_r1_20250120()
+    elif model == "deepseek-r1-20250528":
+        endpoint = InferenceLog.deepseek_r1_20250528()
     elif model == "hyperbolic-deepseek-v3-20250324":
         endpoint = InferenceLog.hyperbolic_deepseek_v3_20250324()
     elif model == "hyperbolic-deepseek-v3-20241226":
@@ -622,8 +654,16 @@ def main():
         endpoint = InferenceLog.together_qwen_qwq_32b_preview()
     elif model == "claude-3.5-sonnet-20241022":
         endpoint = InferenceLog.claude_3_5_sonnet_20241022()
-    elif model == "grok-3-mini-beta":
+    elif model in (
+        "grok-3-mini-beta",
+        "grok-3-mini-beta-20250418",
+    ):
         endpoint = InferenceLog.grok_3_mini_beta()
+    elif model in (
+        "grok-3-beta",
+        "grok-3-beta-20250418",
+    ):
+        endpoint = InferenceLog.grok_3_beta()
     else:
         print(f"DEBUG: unsupported model = {repr(model)}")
         return
