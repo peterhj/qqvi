@@ -1,9 +1,7 @@
 [default]
-model = deepseek-r1
+model = deepseek-v3
 
 [aliases]
-claude      = claude-3.7-sonnet-20250219
-deepseek    = deepseek-v3-chat-20250324
-deepseek-r1 = deepseek-r1-20250120
-llama       = llama-3.1-405b-instruct-quant8
-sonnet      = claude-3.7-sonnet-20250219
+deepseek-v3 = deepseek-v3-chat-20250324
+deepseek-r1 = deepseek-r1-20250528
+grok-3-mini = grok-3-mini-beta-20250418
