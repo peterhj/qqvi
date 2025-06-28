@@ -32,6 +32,7 @@ def _load_api_token(key, domain):
             pass
     return api_token
 
+DEEPINFRA_API_TOKEN = _load_api_token("DEEPINFRA",  "deepinfra.com")
 TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",   "together.ai")
 HYPERBOLIC_API_TOKEN = _load_api_token("HYPERBOLIC", "hyperbolic.xyz")
 OPENROUTER_API_TOKEN = _load_api_token("OPENROUTER", "openrouter.ai")
@@ -79,6 +80,47 @@ class InferenceEndpoint:
     endpoint_api_token: str
     endpoint_protocol: str
     endpoint_extra_params: Optional[dict] = None
+
+    @classmethod
+    def deepinfra(cls, **kwargs) -> Any:
+        return cls(
+            endpoint_api_url = "https://api.deepinfra.com",
+            endpoint_api_token = DEEPINFRA_API_TOKEN,
+            endpoint_protocol = "openai",
+            **kwargs,
+        )
+
+    @classmethod
+    def claude_4_sonnet_20250514_deepinfra(cls) -> Any:
+        return cls.deepinfra(
+            model = "claude-4-sonnet-20250514",
+            endpoint_model = "anthropic/claude-4-sonnet",
+            endpoint_max_tokens = 100000,
+        )
+
+    @classmethod
+    def claude_4_opus_20250514_deepinfra(cls) -> Any:
+        return cls.deepinfra(
+            model = "claude-4-opus-20250514",
+            endpoint_model = "anthropic/claude-4-opus",
+            endpoint_max_tokens = 100000,
+        )
+
+    @classmethod
+    def gemini_2_5_flash_20250617_deepinfra(cls) -> Any:
+        return cls.deepinfra(
+            model = "gemini-2.5-flash-20250617",
+            endpoint_model = "google/gemini-2.5-flash",
+            endpoint_max_tokens = 131072,
+        )
+
+    @classmethod
+    def gemini_2_5_pro_20250617_deepinfra(cls) -> Any:
+        return cls.deepinfra(
+            model = "gemini-2.5-pro-20250617",
+            endpoint_model = "google/gemini-2.5-pro",
+            endpoint_max_tokens = 131072,
+        )
 
     @classmethod
     def together(cls, **kwargs) -> Any:
@@ -676,12 +718,20 @@ def main():
 
     if model == "llama-3.1-405b-instruct-quant8":
         endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
+    elif model == "claude-4-sonnet-20250514":
+        endpoint = InferenceLog.claude_4_sonnet_20250514_deepinfra()
+    elif model == "claude-4-opus-20250514":
+        endpoint = InferenceLog.claude_4_opus_20250514_deepinfra()
     elif model == "claude-3.5-sonnet-20241022":
         endpoint = InferenceLog.claude_3_5_sonnet_20241022()
     elif model == "deepseek-v3-chat-20250324":
         endpoint = InferenceLog.deepseek_v3_chat_20250324()
     elif model == "deepseek-r1-20250528":
         endpoint = InferenceLog.deepseek_r1_20250528()
+    elif model == "gemini-2.5-flash-20250617":
+        endpoint = InferenceLog.gemini_2_5_flash_20250617_deepinfra()
+    elif model == "gemini-2.5-pro-20250617":
+        endpoint = InferenceLog.gemini_2_5_pro_20250617_deepinfra()
     elif model in (
         "grok-3-mini-beta",
         "grok-3-mini-beta-20250418",
