@@ -32,13 +32,13 @@ def _load_api_token(key, domain):
             pass
     return api_token
 
+TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",   "together.ai")
+HYPERBOLIC_API_TOKEN = _load_api_token("HYPERBOLIC", "hyperbolic.xyz")
+OPENROUTER_API_TOKEN = _load_api_token("OPENROUTER", "openrouter.ai")
 ANTHROPIC_API_TOKEN = _load_api_token("ANTHROPIC",  "anthropic.com")
 DEEPSEEK_API_TOKEN  = _load_api_token("DEEPSEEK",   "deepseek.com")
 GEMINI_API_TOKEN    = _load_api_token("GEMINI",     "aistudio.google.com")
-HYPERBOLIC_API_TOKEN = _load_api_token("HYPERBOLIC", "hyperbolic.xyz")
 OPENAI_API_TOKEN    = _load_api_token("OPENAI",     "openai.com")
-OPENROUTER_API_TOKEN = _load_api_token("OPENROUTER", "openrouter.ai")
-TOGETHER_API_TOKEN  = _load_api_token("TOGETHER",   "together.ai")
 XAI_API_TOKEN       = _load_api_token("XAI",        "x.ai")
 
 def _load_conf():
@@ -79,6 +79,97 @@ class InferenceEndpoint:
     endpoint_api_token: str
     endpoint_protocol: str
     endpoint_extra_params: Optional[dict] = None
+
+    @classmethod
+    def together(cls, **kwargs) -> Any:
+        return cls(
+            endpoint_api_url = "https://api.together.xyz",
+            endpoint_api_token = TOGETHER_API_TOKEN,
+            endpoint_protocol = "openai",
+            **kwargs,
+        )
+
+    @classmethod
+    def together_deepseek_v3(cls) -> Any:
+        return cls.together(
+            model = "deepseek-v3",
+            endpoint_model = "deepseek-ai/DeepSeek-V3",
+            endpoint_max_tokens = 8192,
+        )
+
+    @classmethod
+    def together_llama_3_1_405b_instruct_quant8(cls) -> Any:
+        return cls.together(
+            model = "llama-3.1-405b-instruct-quant8",
+            endpoint_model = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def together_qwen_qwq_32b_preview(cls) -> Any:
+        return cls.together(
+            model = "qwq-32b-preview",
+            endpoint_model = "Qwen/QwQ-32B-Preview",
+            endpoint_max_tokens = 16384,
+            #endpoint_max_tokens = 32768,
+        )
+
+    @classmethod
+    def hyperbolic(cls, **kwargs) -> Any:
+        return cls(
+            endpoint_api_url = "https://api.hyperbolic.xyz",
+            endpoint_api_token = HYPERBOLIC_API_TOKEN,
+            endpoint_protocol = "openai",
+            **kwargs,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_r1_20250120(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-r1-20250120",
+            endpoint_model = "deepseek-ai/DeepSeek-R1",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_r1_zero_20250120(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-r1-zero-20250120",
+            endpoint_model = "deepseek-ai/DeepSeek-R1-Zero",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_v3_20250324(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-v3-20250324",
+            endpoint_model = "deepseek-ai/DeepSeek-V3-0324",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_deepseek_v3_20241226(cls) -> Any:
+        return cls.hyperbolic(
+            model = "hyperbolic-deepseek-v3-20241226",
+            endpoint_model = "deepseek-ai/DeepSeek-V3",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_llama_3_1_405b_base_bf16(cls) -> Any:
+        return cls.hyperbolic(
+            model = "llama-3.1-405b-base",
+            endpoint_model = "meta-llama/Meta-Llama-3.1-405B",
+            endpoint_max_tokens = 4096,
+        )
+
+    @classmethod
+    def hyperbolic_llama_3_1_405b_base_fp8(cls) -> Any:
+        return cls.hyperbolic(
+            model = "llama-3.1-405b-base-fp8",
+            endpoint_model = "meta-llama/Meta-Llama-3.1-405B-FP8",
+            endpoint_max_tokens = 4096,
+        )
 
     @classmethod
     def anthropic(cls, **kwargs) -> Any:
@@ -167,94 +258,34 @@ class InferenceEndpoint:
         )
 
     @classmethod
-    def hyperbolic(cls, **kwargs) -> Any:
+    def openai(cls, **kwargs) -> Any:
         return cls(
-            endpoint_api_url = "https://api.hyperbolic.xyz",
-            endpoint_api_token = HYPERBOLIC_API_TOKEN,
+            endpoint_api_url = "https://api.openai.com",
+            endpoint_api_token = OPENAI_API_TOKEN,
             endpoint_protocol = "openai",
             **kwargs,
         )
 
     @classmethod
-    def hyperbolic_deepseek_r1_20250120(cls) -> Any:
-        return cls.hyperbolic(
-            model = "hyperbolic-deepseek-r1-20250120",
-            endpoint_model = "deepseek-ai/DeepSeek-R1",
-            endpoint_max_tokens = 4096,
+    def o3_20250416(cls) -> Any:
+        return cls.openai(
+            model = "o3-20250416",
+            endpoint_model = "o3",
+            endpoint_max_tokens = 100000,
+            endpoint_extra_params = {
+                "reasoning_effort": "high",
+            },
         )
 
     @classmethod
-    def hyperbolic_deepseek_r1_zero_20250120(cls) -> Any:
-        return cls.hyperbolic(
-            model = "hyperbolic-deepseek-r1-zero-20250120",
-            endpoint_model = "deepseek-ai/DeepSeek-R1-Zero",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def hyperbolic_deepseek_v3_20250324(cls) -> Any:
-        return cls.hyperbolic(
-            model = "hyperbolic-deepseek-v3-20250324",
-            endpoint_model = "deepseek-ai/DeepSeek-V3-0324",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def hyperbolic_deepseek_v3_20241226(cls) -> Any:
-        return cls.hyperbolic(
-            model = "hyperbolic-deepseek-v3-20241226",
-            endpoint_model = "deepseek-ai/DeepSeek-V3",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def hyperbolic_llama_3_1_405b_base_bf16(cls) -> Any:
-        return cls.hyperbolic(
-            model = "llama-3.1-405b-base",
-            endpoint_model = "meta-llama/Meta-Llama-3.1-405B",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def hyperbolic_llama_3_1_405b_base_fp8(cls) -> Any:
-        return cls.hyperbolic(
-            model = "llama-3.1-405b-base-fp8",
-            endpoint_model = "meta-llama/Meta-Llama-3.1-405B-FP8",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def together(cls, **kwargs) -> Any:
-        return cls(
-            endpoint_api_url = "https://api.together.xyz",
-            endpoint_api_token = TOGETHER_API_TOKEN,
-            endpoint_protocol = "openai",
-            **kwargs,
-        )
-
-    @classmethod
-    def together_deepseek_v3(cls) -> Any:
-        return cls.together(
-            model = "deepseek-v3",
-            endpoint_model = "deepseek-ai/DeepSeek-V3",
-            endpoint_max_tokens = 8192,
-        )
-
-    @classmethod
-    def together_llama_3_1_405b_instruct_quant8(cls) -> Any:
-        return cls.together(
-            model = "llama-3.1-405b-instruct-quant8",
-            endpoint_model = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-            endpoint_max_tokens = 4096,
-        )
-
-    @classmethod
-    def together_qwen_qwq_32b_preview(cls) -> Any:
-        return cls.together(
-            model = "qwq-32b-preview",
-            endpoint_model = "Qwen/QwQ-32B-Preview",
-            endpoint_max_tokens = 16384,
-            #endpoint_max_tokens = 32768,
+    def o4_mini_20250416(cls) -> Any:
+        return cls.openai(
+            model = "o4-mini-20250416",
+            endpoint_model = "o4-mini",
+            endpoint_max_tokens = 100000,
+            endpoint_extra_params = {
+                "reasoning_effort": "high",
+            },
         )
 
     @classmethod
@@ -393,6 +424,13 @@ class InferenceEndpoint:
                     "temperature": 0,
                     #"top_p": 1,
                 }
+            elif (
+                self.endpoint_protocol == "openai" and (
+                    self.endpoint_model.startswith("o3-") or
+                    self.endpoint_model.startswith("o4-")
+                )
+            ):
+                pass
             else:
                 req_body |= {
                     # TODO: configure sampling params.
@@ -636,24 +674,14 @@ def main():
         print(f"DEBUG: no messages")
         return
 
-    if model == "deepseek-v3-chat-20250324":
+    if model == "llama-3.1-405b-instruct-quant8":
+        endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
+    elif model == "claude-3.5-sonnet-20241022":
+        endpoint = InferenceLog.claude_3_5_sonnet_20241022()
+    elif model == "deepseek-v3-chat-20250324":
         endpoint = InferenceLog.deepseek_v3_chat_20250324()
     elif model == "deepseek-r1-20250528":
         endpoint = InferenceLog.deepseek_r1_20250528()
-    elif model == "hyperbolic-deepseek-v3-20250324":
-        endpoint = InferenceLog.hyperbolic_deepseek_v3_20250324()
-    elif model == "hyperbolic-deepseek-v3-20241226":
-        endpoint = InferenceLog.hyperbolic_deepseek_v3_20241226()
-    elif model == "hyperbolic-deepseek-r1-20250120":
-        endpoint = InferenceLog.hyperbolic_deepseek_r1_20250120()
-    elif model == "together-deepseek-v3-20241226":
-        endpoint = InferenceLog.together_deepseek_v3_20241226()
-    elif model == "llama-3.1-405b-instruct-quant8":
-        endpoint = InferenceLog.together_llama_3_1_405b_instruct_quant8()
-    elif model == "qwq-32b-preview":
-        endpoint = InferenceLog.together_qwen_qwq_32b_preview()
-    elif model == "claude-3.5-sonnet-20241022":
-        endpoint = InferenceLog.claude_3_5_sonnet_20241022()
     elif model in (
         "grok-3-mini-beta",
         "grok-3-mini-beta-20250418",
@@ -664,6 +692,10 @@ def main():
         "grok-3-beta-20250418",
     ):
         endpoint = InferenceLog.grok_3_beta()
+    elif model in ("o3", "o3-20250416"):
+        endpoint = InferenceLog.o3_20250416()
+    elif model in ("o4-mini", "o4-mini-20250416"):
+        endpoint = InferenceLog.o4_mini_20250416()
     else:
         print(f"DEBUG: unsupported model = {repr(model)}")
         return
