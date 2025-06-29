@@ -75,7 +75,7 @@ AA_PAT = f"{chr(0x01)}{chr(0x01)}"
 class InferenceEndpoint:
     model: Optional[str]
     endpoint_model: str
-    endpoint_max_tokens: int
+    endpoint_max_new_tokens: int
     endpoint_api_url: str
     endpoint_api_token: str
     endpoint_protocol: str
@@ -95,7 +95,7 @@ class InferenceEndpoint:
         return cls.deepinfra(
             model = "claude-4-sonnet-20250514",
             endpoint_model = "anthropic/claude-4-sonnet",
-            endpoint_max_tokens = 100000,
+            endpoint_max_new_tokens = 100000,
         )
 
     @classmethod
@@ -103,7 +103,7 @@ class InferenceEndpoint:
         return cls.deepinfra(
             model = "claude-4-opus-20250514",
             endpoint_model = "anthropic/claude-4-opus",
-            endpoint_max_tokens = 100000,
+            endpoint_max_new_tokens = 100000,
         )
 
     @classmethod
@@ -111,7 +111,7 @@ class InferenceEndpoint:
         return cls.deepinfra(
             model = "gemini-2.5-flash-20250617",
             endpoint_model = "google/gemini-2.5-flash",
-            endpoint_max_tokens = 131072,
+            endpoint_max_new_tokens = 131072,
         )
 
     @classmethod
@@ -119,7 +119,7 @@ class InferenceEndpoint:
         return cls.deepinfra(
             model = "gemini-2.5-pro-20250617",
             endpoint_model = "google/gemini-2.5-pro",
-            endpoint_max_tokens = 131072,
+            endpoint_max_new_tokens = 131072,
         )
 
     @classmethod
@@ -136,7 +136,7 @@ class InferenceEndpoint:
         return cls.together(
             model = "deepseek-v3",
             endpoint_model = "deepseek-ai/DeepSeek-V3",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
         )
 
     @classmethod
@@ -144,7 +144,7 @@ class InferenceEndpoint:
         return cls.together(
             model = "llama-3.1-405b-instruct-quant8",
             endpoint_model = "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -152,8 +152,8 @@ class InferenceEndpoint:
         return cls.together(
             model = "qwq-32b-preview",
             endpoint_model = "Qwen/QwQ-32B-Preview",
-            endpoint_max_tokens = 16384,
-            #endpoint_max_tokens = 32768,
+            endpoint_max_new_tokens = 16384,
+            #endpoint_max_new_tokens = 32768,
         )
 
     @classmethod
@@ -170,7 +170,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "hyperbolic-deepseek-r1-20250120",
             endpoint_model = "deepseek-ai/DeepSeek-R1",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -178,7 +178,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "hyperbolic-deepseek-r1-zero-20250120",
             endpoint_model = "deepseek-ai/DeepSeek-R1-Zero",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -186,7 +186,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "hyperbolic-deepseek-v3-20250324",
             endpoint_model = "deepseek-ai/DeepSeek-V3-0324",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -194,7 +194,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "hyperbolic-deepseek-v3-20241226",
             endpoint_model = "deepseek-ai/DeepSeek-V3",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -202,7 +202,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "llama-3.1-405b-base",
             endpoint_model = "meta-llama/Meta-Llama-3.1-405B",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -210,7 +210,7 @@ class InferenceEndpoint:
         return cls.hyperbolic(
             model = "llama-3.1-405b-base-fp8",
             endpoint_model = "meta-llama/Meta-Llama-3.1-405B-FP8",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -227,7 +227,7 @@ class InferenceEndpoint:
         return cls.anthropic(
             model = "claude-3.7-sonnet-20250219",
             endpoint_model = "claude-3-7-sonnet-20250219",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
         )
 
     @classmethod
@@ -235,7 +235,7 @@ class InferenceEndpoint:
         return cls.anthropic(
             model = "claude-3.5-sonnet-20241022",
             endpoint_model = "claude-3-5-sonnet-20241022",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
         )
 
     @classmethod
@@ -243,7 +243,7 @@ class InferenceEndpoint:
         return cls.anthropic(
             model = "claude-3.5-sonnet-20240620",
             endpoint_model = "claude-3-5-sonnet-20240620",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
         )
 
     @classmethod
@@ -260,7 +260,7 @@ class InferenceEndpoint:
         return cls.deepseek(
             model = "deepseek-r1-20250528",
             endpoint_model = "deepseek-reasoner",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
             #endpoint_max_context_len = 65536,
         )
 
@@ -269,7 +269,7 @@ class InferenceEndpoint:
         return cls.deepseek(
             model = "deepseek-r1-20250120",
             endpoint_model = "deepseek-reasoner",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
             #endpoint_max_context_len = 65536,
         )
 
@@ -278,7 +278,7 @@ class InferenceEndpoint:
         return cls.deepseek(
             model = "deepseek-v3-chat-20250324",
             endpoint_model = "deepseek-chat",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
             #endpoint_max_context_len = 65536,
         )
 
@@ -287,7 +287,7 @@ class InferenceEndpoint:
         return cls.deepseek(
             model = "deepseek-v3-chat-20241226",
             endpoint_model = "deepseek-chat",
-            endpoint_max_tokens = 8192,
+            endpoint_max_new_tokens = 8192,
             #endpoint_max_context_len = 65536,
         )
 
@@ -296,7 +296,7 @@ class InferenceEndpoint:
         return cls.deepseek(
             model = "deepseek-v2.5-chat-20241210",
             endpoint_model = "deepseek-chat",
-            endpoint_max_tokens = 4096,
+            endpoint_max_new_tokens = 4096,
         )
 
     @classmethod
@@ -313,7 +313,7 @@ class InferenceEndpoint:
         return cls.openai(
             model = "o3-20250416",
             endpoint_model = "o3",
-            endpoint_max_tokens = 100000,
+            endpoint_max_new_tokens = 100000,
             endpoint_extra_params = {
                 "reasoning_effort": "high",
             },
@@ -324,7 +324,7 @@ class InferenceEndpoint:
         return cls.openai(
             model = "o4-mini-20250416",
             endpoint_model = "o4-mini",
-            endpoint_max_tokens = 100000,
+            endpoint_max_new_tokens = 100000,
             endpoint_extra_params = {
                 "reasoning_effort": "high",
             },
@@ -344,7 +344,7 @@ class InferenceEndpoint:
         return cls.xai(
             model = "grok-3-mini-20250520",
             endpoint_model = "grok-3-mini",
-            endpoint_max_tokens = 131072,
+            endpoint_max_new_tokens = 131072,
             endpoint_extra_params = {
                 "reasoning_effort": "high",
             },
@@ -355,9 +355,9 @@ class InferenceEndpoint:
         return cls.xai(
             model = "grok-3-mini-beta-20250418",
             endpoint_model = "grok-3-mini-beta",
-            #endpoint_max_tokens = 32768,
-            #endpoint_max_tokens = 65536,
-            endpoint_max_tokens = 131072,
+            #endpoint_max_new_tokens = 32768,
+            #endpoint_max_new_tokens = 65536,
+            endpoint_max_new_tokens = 131072,
             endpoint_extra_params = {
                 "reasoning_effort": "high",
             },
@@ -368,7 +368,7 @@ class InferenceEndpoint:
         return cls.xai(
             model = "grok-3-beta-20250520",
             endpoint_model = "grok-3",
-            endpoint_max_tokens = 131072,
+            endpoint_max_new_tokens = 131072,
         )
 
     @classmethod
@@ -376,9 +376,9 @@ class InferenceEndpoint:
         return cls.xai(
             model = "grok-3-beta-20250418",
             endpoint_model = "grok-3-beta",
-            #endpoint_max_tokens = 32768,
-            #endpoint_max_tokens = 65536,
-            endpoint_max_tokens = 131072,
+            #endpoint_max_new_tokens = 32768,
+            #endpoint_max_new_tokens = 65536,
+            endpoint_max_new_tokens = 131072,
         )
 
     def __post_init__(self) -> None:
@@ -451,30 +451,33 @@ class InferenceEndpoint:
                 "messages": messages,
                 "model": self.endpoint_model,
                 "stream": False,
-                "max_tokens": self.endpoint_max_tokens,
             }
             if (
                 self.endpoint_protocol == "deepseek" and
                 self.endpoint_model == "deepseek-reasoner"
             ):
-                pass
+                req_body["max_new_tokens"] = self.endpoint_max_new_tokens
             elif (
                 self.endpoint_protocol == "deepseek"
             ):
                 req_body |= {
+                    "max_new_tokens": self.endpoint_max_new_tokens,
                     # TODO: configure sampling params.
                     "temperature": 0,
                     #"top_p": 1,
                 }
             elif (
                 self.endpoint_protocol == "openai" and (
+                    self.endpoint_model == "o3" or
                     self.endpoint_model.startswith("o3-") or
                     self.endpoint_model.startswith("o4-")
                 )
             ):
-                pass
+                req_body["max_completion_tokens"] = self.endpoint_max_new_tokens
             else:
                 req_body |= {
+                    # TODO: max_tokens is input + output.
+                    "max_tokens": self.endpoint_max_new_tokens,
                     # TODO: configure sampling params.
                     "temperature": 0,
                     "top_p": 1,
