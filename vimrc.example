@@ -1,15 +1,45 @@
 function! _Qq(...)
-  let l:post = {'exit_cb': function('_QqPost')}
+  " optional: save before :qq
+  ""if &modified
+  ""  write
+  ""endif
+  let l:post = {
+      \ 'exit_cb': function('_QqPost'),
+      \ 'err_cb': function('_QqErr'),
+      \ 'err_io': 'pipe',
+      \ 'out_io': 'null' }
   let l:args = ['_qq_vim', expand('%')] + a:000
-  call job_start(l:args, l:post)
+  let l:job = job_start(l:args, l:post)
+  if job_status(l:job) == 'fail'
+    echohl ErrorMsg
+    echomsg "failed to qq!"
+    echohl None
+    return
+  endif
+  let s:qq_job = l:job
+  let s:qq_err = []
   echohl User1
   echomsg 'qq...'
   echohl None
 endfunction
 
+function! _QqErr(chan, msg)
+  call add(s:qq_err, a:msg)
+endfunction
+
 function! _QqPost(job, status)
+  if a:status != 0
+    echohl ErrorMsg
+    echomsg "failed to qq: status ".a:status.":"
+    for line in s:qq_err
+      echomsg line
+    endfor
+    echohl None
+    return
+  endif
   let l:line = line('.')
   let l:col = col('.')
+  ""checktime
   edit
   call cursor(l:line, l:col)
 endfunction
