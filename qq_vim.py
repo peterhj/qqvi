@@ -54,8 +54,8 @@ def _load_conf():
         }
         conf["aliases"] = {
             "claude": "claude-3.7-sonnet-20250219",
-            "deepseek": "deepseek-v3-chat-20250324",
-            "deepseek-r1": "deepseek-r1-20250528",
+            "deepseek": "deepseek-v3.1-thinking-off",
+            "deepseek-r1": "deepseek-v3.1-thinking-on",
             "llama": "llama-3.1-405b-instruct-quant8",
             "sonnet": "claude-3.7-sonnet-20250219",
         }
@@ -256,6 +256,15 @@ class InferenceEndpoint:
         )
 
     @classmethod
+    def deepseek_v3_1_thinking_on(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-v3.1-thinking-on",
+            endpoint_model = "deepseek-reasoner",
+            endpoint_max_new_tokens = 32768,
+            #endpoint_max_new_tokens = 131072,
+        )
+
+    @classmethod
     def deepseek_r1_20250528(cls) -> Any:
         return cls.deepseek(
             model = "deepseek-r1-20250528",
@@ -271,6 +280,14 @@ class InferenceEndpoint:
             endpoint_model = "deepseek-reasoner",
             endpoint_max_new_tokens = 8192,
             #endpoint_max_context_len = 65536,
+        )
+
+    @classmethod
+    def deepseek_v3_1_thinking_off(cls) -> Any:
+        return cls.deepseek(
+            model = "deepseek-v3.1-thinking-off",
+            endpoint_model = "deepseek-chat",
+            endpoint_max_new_tokens = 32768,
         )
 
     @classmethod
@@ -452,20 +469,12 @@ class InferenceEndpoint:
                 "model": self.endpoint_model,
                 "stream": False,
             }
-            if (
-                self.endpoint_protocol == "deepseek" and
-                self.endpoint_model == "deepseek-reasoner"
-            ):
+            if self.endpoint_protocol == "deepseek":
                 req_body["max_new_tokens"] = self.endpoint_max_new_tokens
-            elif (
-                self.endpoint_protocol == "deepseek"
-            ):
-                req_body |= {
-                    "max_new_tokens": self.endpoint_max_new_tokens,
+                if self.endpoint_model == "deepseek-chat":
                     # TODO: configure sampling params.
-                    "temperature": 0,
-                    #"top_p": 1,
-                }
+                    req_body["temperature"] = 0
+                    #req_body["top_p"] = 1
             elif (
                 self.endpoint_protocol == "openai" and (
                     self.endpoint_model == "o3" or
@@ -731,6 +740,10 @@ def main():
         endpoint = InferenceLog.deepseek_v3_chat_20250324()
     elif model == "deepseek-r1-20250528":
         endpoint = InferenceLog.deepseek_r1_20250528()
+    elif model == "deepseek-v3.1-thinking-off":
+        endpoint = InferenceLog.deepseek_v3_1_thinking_off()
+    elif model == "deepseek-v3.1-thinking-on":
+        endpoint = InferenceLog.deepseek_v3_1_thinking_on()
     elif model == "gemini-2.5-flash-20250617":
         endpoint = InferenceLog.gemini_2_5_flash_20250617_deepinfra()
     elif model == "gemini-2.5-pro-20250617":
