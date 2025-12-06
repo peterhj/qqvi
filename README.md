@@ -3,7 +3,7 @@
 ## What is this?
 
 This is a simple vim "plugin", based on a couple of Python scripts and
-a little bit of vimrc, for interacting with chat completion endpoints
+a little bit of vimrc, for interacting with LLM inference endpoints
 from within the ergonomic comfort of vim.
 
 ## Installation
@@ -33,6 +33,15 @@ In vim:
     More `^Q^Q` escape chars are also appended at the end of the text
     file.
 7.  Repeat (3)-(6).
+
+## Implementation details / changelog
+
+As of the December 2025 update, this script has been migrated to preferably use
+`/v1/messages`-compatible APIs where possible.
+
+Technically, we implement a superset of the messages API by supporting an
+initial `"system"` role message, which is translated to a special field in the
+API request.
 
 ## See also
 
