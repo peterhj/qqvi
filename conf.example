@@ -1,7 +1,0 @@
-[default]
-model = deepseek-v3
-
-[aliases]
-deepseek-v3 = deepseek-v3-chat-20250324
-deepseek-r1 = deepseek-r1-20250528
-grok-3-mini = grok-3-mini-beta-20250418

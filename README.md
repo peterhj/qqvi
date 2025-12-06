@@ -9,20 +9,10 @@ from within the ergonomic comfort of vim.
 ## Installation
 
 ```sh
-cat vimrc.example >> ~/.vimrc
-mkdir -p ~/.local/bin
-cp -pv qq_vim.py ~/.local/bin/_qq_vim
-cp -pv qqq_vim.py ~/.local/bin/_qqq_vim
+./install_qq.py [--prefix=$HOME/.local]
 ```
 
 You should also ensure that `$HOME/.local/bin` is in your `$PATH`.
-
-### Install extras (optional)
-
-```sh
-mkdir -p ~/.qq
-cp -pv conf.example ~/.qq/conf
-```
 
 ## Usage
 
@@ -48,6 +38,8 @@ In vim:
 
 - [Christoffer Stjernlöf's q script](https://entropicthoughts.com/q)
   (based on [Simon Willison's llm tool](https://simonwillison.net/2024/Aug/7/q-what-do-i-title-this-article/))
+- [qq.fish](https://github.com/dzervas/dotfiles/blob/main/home/fish-functions/qq.fish)
+- [qqqa](https://github.com/matisojka/qqqa)
 
 ## License
 

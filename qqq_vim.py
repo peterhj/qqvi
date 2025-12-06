@@ -5,7 +5,6 @@ import json
 import os
 
 HOME = os.environ["HOME"]
-LOG_DIR = os.path.join(HOME, ".qq", "log")
 CACHE_DIR = os.path.join(HOME, ".qq", "cache")
 
 QQ_PAT = f"{chr(0x11)}{chr(0x11)}"
