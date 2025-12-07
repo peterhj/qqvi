@@ -14,11 +14,10 @@ from within the ergonomic comfort of vim.
 
 You should also ensure that `$HOME/.local/bin` is in your `$PATH`.
 
-## Usage
+## Basic usage
 
-Configure endpoint API tokens either via environment variables
-(e.g. `$DEEPSEEK_API_KEY`, `$ANTHROPIC_API_KEY`, `$TOGETHER_API_KEY`, etc.)
-or via text files located in `~/.qq/api_tokens`.
+Configure endpoint API tokens via environment variables,
+e.g. `$DEEPSEEK_API_KEY`, `$ANTHROPIC_API_KEY`, `$XAI_API_KEY`, etc.
 
 In vim:
 
@@ -33,6 +32,11 @@ In vim:
     More `^Q^Q` escape chars are also appended at the end of the text
     file.
 7.  Repeat (3)-(6).
+
+## Advanced usage
+
+- Any text that you place before (above/left of) the initial `^Q^Q` prompt
+  will be interpreted as an initial _system message_.
 
 ## Implementation details / changelog
 
