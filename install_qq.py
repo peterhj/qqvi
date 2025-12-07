@@ -6,7 +6,7 @@ import shlex
 import stat
 
 def main(args):
-    if args.prefix is None:
+    if args.prefix is not None:
         prefix = args.prefix
     else:
         prefix = os.path.join(os.environ["HOME"], ".local")
