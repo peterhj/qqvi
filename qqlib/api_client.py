@@ -1069,26 +1069,38 @@ class APIClientModelEndpoint:
                         stop_reason = "refusal"
                     break
                 new_payload["role"] = role
+                new_payload["model"] = self.model.model_path
                 new_payload["content"] = newcontent
                 new_payload["stop_reason"] = stop_reason
                 new_payload["stop_sequence"] = None
                 usage = dict()
                 if res_usage is not None:
-                    prompt_tokens = res_usage.get("prompt_tokens", None)
-                    if prompt_tokens is not None:
-                        usage["input_tokens"] = prompt_tokens
                     total_tokens = res_usage.get("total_tokens", None)
+                    prompt_tokens = res_usage.get("prompt_tokens", None)
                     completion_tokens = res_usage.get("completion_tokens", None)
-                    if prompt_tokens is not None and total_tokens is not None:
-                        if completion_tokens is not None:
-                            usage["output_tokens"] = max(total_tokens - prompt_tokens, completion_tokens)
-                        else:
-                            usage["output_tokens"] = total_tokens - prompt_tokens
-                    elif completion_tokens is not None:
-                        usage["output_tokens"] = completion_tokens
+                    input_output_tokens = 0
+                    if total_tokens is not None:
+                        input_output_tokens = max(input_output_tokens, total_tokens)
+                    if prompt_tokens is not None:
+                        input_output_tokens = max(input_output_tokens, prompt_tokens)
+                    if completion_tokens is not None:
+                        input_output_tokens = max(input_output_tokens, completion_tokens)
+                    if prompt_tokens is not None and completion_tokens is not None:
+                        input_output_tokens = max(input_output_tokens, prompt_tokens + completion_tokens)
+                    input_tokens = 0
+                    output_tokens = 0
+                    if prompt_tokens is not None:
+                        input_tokens = prompt_tokens
+                    if completion_tokens is not None:
+                        output_tokens = completion_tokens
+                    if input_tokens + output_tokens < input_output_tokens:
+                        output_tokens = max(output_tokens, input_output_tokens - input_tokens)
+                    usage["input_tokens"] = input_tokens
+                    usage["output_tokens"] = output_tokens
                 new_payload["usage"] = usage
+            if "model" not in new_payload:
+                new_payload["model"] = self.model.model_path
             res.payload = new_payload
-            res.payload["model"] = self.model.model_path
         else:
             raise NotImplementedError
         print(f"DEBUG: APIClientModelEndpoint.message: final res body = {res.payload}", flush=True)
