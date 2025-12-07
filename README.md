@@ -10,6 +10,7 @@ from within the ergonomic comfort of vim.
 
 ```sh
 ./install_qq.py [--prefix=$HOME/.local]
+cat vimrc.example >> $HOME/.vimrc
 ```
 
 You should also ensure that `$HOME/.local/bin` is in your `$PATH`.
