@@ -18,7 +18,7 @@ f"""#!/usr/bin/env python3
 PYTHONPATH={shlex.quote(cwd)} python3 {shlex.quote(qqq_src_path)} "$@"
 """
     )
-    with open() as f:
+    with open(qqq_dst_path) as f:
         print(qqq_content, end="", file=f)
     os.chmod(qqq_dst_path, stat.S_IXUSR | stat.S_IXGRP | stat.s_IXOTH)
     print("Installed: _qqq_vim")
