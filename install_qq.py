@@ -14,24 +14,22 @@ def main(args):
     qqq_src_path = os.path.join(cwd, "qqq_vim.py")
     qqq_dst_path = os.path.join(prefix, "bin", "_qqq_vim")
     qqq_content = (
-f"""#!/usr/bin/env python3
-PYTHONPATH={shlex.quote(cwd)} python3 {shlex.quote(qqq_src_path)} "$@"
+f"""PYTHONPATH={shlex.quote(cwd)} python3 {shlex.quote(qqq_src_path)} "$@"
 """
     )
-    with open(qqq_dst_path) as f:
+    with open(qqq_dst_path, "w") as f:
         print(qqq_content, end="", file=f)
-    os.chmod(qqq_dst_path, stat.S_IXUSR | stat.S_IXGRP | stat.s_IXOTH)
+    os.chmod(qqq_dst_path, 0o755)
     print("Installed: _qqq_vim")
     qq_src_path = os.path.join(cwd, "qq_vim.py")
     qq_dst_path = os.path.join(prefix, "bin", "_qq_vim")
     qq_content = (
-f"""#!/usr/bin/env python3
-PYTHONPATH={shlex.quote(cwd)} python3 {shlex.quote(qq_src_path)} "$@"
+f"""PYTHONPATH={shlex.quote(cwd)} python3 {shlex.quote(qq_src_path)} "$@"
 """
     )
-    with open(qq_dst_path) as f:
+    with open(qq_dst_path, "w") as f:
         print(qq_content, end="", file=f)
-    os.chmod(qq_dst_path, stat.S_IXUSR | stat.S_IXGRP | stat.s_IXOTH)
+    os.chmod(qq_dst_path, 0o755)
     print("Installed: _qq_vim")
     print("Done installation.")
 
