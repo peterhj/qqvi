@@ -105,7 +105,7 @@ class APIMessageResult:
     def message(self) -> Optional[dict]:
         return {
             "role": self.payload["role"],
-            "content": self.content(),
+            "content": self.payload["content"],
         }
 
     def content(self) -> Any:
@@ -1084,90 +1084,6 @@ class APIClientEndpointState:
         if self._max_concurrency is None:
             self._max_concurrency = async_nullcontext()
 
-def _chat_completion(work_item, endpoint_state: APIClientEndpointState):
-    endpoint = APIClientModelEndpoint(work_item.model)
-    t = datetime.utcnow()
-    t0 = None
-    if endpoint.throttle_delay is not None:
-        delta_t = timedelta(seconds=endpoint.throttle_delay)
-        with endpoint_state._lock:
-            t0 = endpoint_state._next_t0
-            if t0 is not None:
-                endpoint_state._next_t0 = max(t0, t) + delta_t
-            else:
-                endpoint_state._next_t0 = t + delta_t
-        while t0 is not None and t0 > t:
-            time.sleep((t0 - t).total_seconds())
-            t = datetime.utcnow()
-    print(f"DEBUG: APIClient.chat_completion: t = {t.isoformat()} t0 = {t0.isoformat() if t0 is not None else None}")
-    work_item.res = APIChatCompletionResponse()
-    endpoint.chat_completion(
-        messages=work_item.messages,
-        sampling_params=work_item.sampling_params,
-        tools=work_item.tools,
-        debug=work_item.debug,
-        res=work_item.res,
-    )
-    return work_item
-
-def _try_chat_completion(work_item, endpoint_state: APIClientEndpointState):
-    try:
-        _chat_completion(work_item, endpoint_state)
-    # TODO: exc reporting.
-    except Exception as e:
-        # print(f"DEBUG: _try_chat_completion: except = {e}")
-        work_item.exc = APIExceptionInfo(
-            exc_type=f"{type(e).__name__}",
-            exc_str=str(e),
-            stack_trace=traceback.format_exc(),
-        )
-        print(f"DEBUG: _try_chat_completion: except = {work_item.exc}")
-    return work_item
-
-def _message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
-    endpoint = APIClientModelEndpoint(work_item.model, prefer_protocol="anthropic")
-    t = datetime.utcnow()
-    t0 = None
-    if endpoint.throttle_delay is not None:
-        delta_t = timedelta(seconds=endpoint.throttle_delay)
-        with endpoint_state._lock:
-            t0 = endpoint_state._next_t0
-            if t0 is not None:
-                endpoint_state._next_t0 = max(t0, t) + delta_t
-            else:
-                endpoint_state._next_t0 = t + delta_t
-        while t0 is not None and t0 > t:
-            time.sleep((t0 - t).total_seconds())
-            t = datetime.utcnow()
-    print(f"DEBUG: APIClient.message: t = {t.isoformat()} t0 = {t0.isoformat() if t0 is not None else None}")
-    work_item.res = APIMessageResult()
-    endpoint.message(
-        messages=work_item.messages,
-        sampling_params=work_item.sampling_params,
-        tools=work_item.tools,
-        api_version=work_item.api_version,
-        # debug=work_item.debug,
-        worker=worker,
-        res=work_item.res,
-    )
-    return work_item
-
-def _try_message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
-    try:
-        _message(work_item, endpoint_state, worker)
-    # TODO: exc reporting.
-    except Exception as e:
-        # print(f"DEBUG: _try_message: except = {e}")
-        work_item.exc = APIExceptionInfo(
-            exc_type=f"{type(e).__name__}",
-            exc_str=str(e),
-            stack_trace=traceback.format_exc(),
-        )
-        # print(f"DEBUG: _try_message: except = {work_item.exc}")
-        print(f"DEBUG: _try_message: except: {work_item.exc.exc_type} {work_item.exc.exc_str}")
-        print(work_item.exc.stack_trace)
-    return work_item
-
 @dataclass
 class APIClientWorker:
     max_concurrency: int
@@ -1251,6 +1167,90 @@ class UrllibAPIClientWorker(APIClientWorker):
         res.status = res_status
         res_body = json.loads(res_data.decode("utf-8"))
         res.payload = res_body
+
+def _chat_completion(work_item, endpoint_state: APIClientEndpointState):
+    endpoint = APIClientModelEndpoint(work_item.model)
+    t = datetime.utcnow()
+    t0 = None
+    if endpoint.throttle_delay is not None:
+        delta_t = timedelta(seconds=endpoint.throttle_delay)
+        with endpoint_state._lock:
+            t0 = endpoint_state._next_t0
+            if t0 is not None:
+                endpoint_state._next_t0 = max(t0, t) + delta_t
+            else:
+                endpoint_state._next_t0 = t + delta_t
+        while t0 is not None and t0 > t:
+            time.sleep((t0 - t).total_seconds())
+            t = datetime.utcnow()
+    print(f"DEBUG: APIClient.chat_completion: t = {t.isoformat()} t0 = {t0.isoformat() if t0 is not None else None}")
+    work_item.res = APIChatCompletionResponse()
+    endpoint.chat_completion(
+        messages=work_item.messages,
+        sampling_params=work_item.sampling_params,
+        tools=work_item.tools,
+        debug=work_item.debug,
+        res=work_item.res,
+    )
+    return work_item
+
+def _try_chat_completion(work_item, endpoint_state: APIClientEndpointState):
+    try:
+        _chat_completion(work_item, endpoint_state)
+    # TODO: exc reporting.
+    except Exception as e:
+        # print(f"DEBUG: _try_chat_completion: except = {e}")
+        work_item.exc = APIExceptionInfo(
+            exc_type=f"{type(e).__name__}",
+            exc_str=str(e),
+            stack_trace=traceback.format_exc(),
+        )
+        print(f"DEBUG: _try_chat_completion: except = {work_item.exc}")
+    return work_item
+
+def _message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
+    endpoint = APIClientModelEndpoint(work_item.model, prefer_protocol="anthropic")
+    t = datetime.utcnow()
+    t0 = None
+    if endpoint.throttle_delay is not None:
+        delta_t = timedelta(seconds=endpoint.throttle_delay)
+        with endpoint_state._lock:
+            t0 = endpoint_state._next_t0
+            if t0 is not None:
+                endpoint_state._next_t0 = max(t0, t) + delta_t
+            else:
+                endpoint_state._next_t0 = t + delta_t
+        while t0 is not None and t0 > t:
+            time.sleep((t0 - t).total_seconds())
+            t = datetime.utcnow()
+    print(f"DEBUG: APIClient.message: t = {t.isoformat()} t0 = {t0.isoformat() if t0 is not None else None}")
+    work_item.res = APIMessageResult()
+    endpoint.message(
+        messages=work_item.messages,
+        sampling_params=work_item.sampling_params,
+        tools=work_item.tools,
+        api_version=work_item.api_version,
+        # debug=work_item.debug,
+        worker=worker,
+        res=work_item.res,
+    )
+    return work_item
+
+def _try_message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
+    try:
+        _message(work_item, endpoint_state, worker)
+    # TODO: exc reporting.
+    except Exception as e:
+        # print(f"DEBUG: _try_message: except = {e}")
+        work_item.exc = APIExceptionInfo(
+            exc_type=f"{type(e).__name__}",
+            exc_str=str(e),
+            stack_trace=traceback.format_exc(),
+        )
+        # print(f"DEBUG: _try_message: except = {work_item.exc}")
+        print(f"DEBUG: _try_message: except: {work_item.exc.exc_type} {work_item.exc.exc_str}")
+        print(work_item.exc.stack_trace)
+    return work_item
 
 @dataclass
 class APIClient:
