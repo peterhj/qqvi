@@ -6,6 +6,7 @@ import asyncio
 import concurrent.futures
 import json
 import os
+import subprocess
 import threading
 import time
 import traceback
@@ -90,7 +91,7 @@ class _APIChatCompletionWorkItem:
         return self.res
 
 @dataclass
-class APIMessageResponse:
+class APIMessageResult:
     status: int = None
     og_status: int = None
     payload: Any = None
@@ -108,7 +109,7 @@ class APIMessageResponse:
         }
 
     def content(self) -> Any:
-        return self.payload["content"]
+        return self.message()["content"]
 
 @dataclass
 class _APIMessageWorkItem:
@@ -116,7 +117,6 @@ class _APIMessageWorkItem:
     messages: Any
     sampling_params: Any
     tools: Any
-    # payload: Any
     api_version: Optional[str]
     # debug: Optional[bool]
     res: Any = None
@@ -128,7 +128,7 @@ class _APIMessageWorkItem:
     def _finalize(self):
         if self.res is None:
             print(f"DEBUG: _APIMessageWorkItem._finalize: res is None")
-            self.res = APIMessageResponse()
+            self.res = APIMessageResult()
             self.res.status = 500
             return self.res
         self.res.og_status = self.res.status
@@ -143,9 +143,7 @@ class _APIMessageWorkItem:
 class APIClientModelEndpoint:
     model: APIModel
     endpoint: APIEndpoint = None
-    target_protocol: Optional[str] = None
-    # endpoint_protocol: Optional[str] = None
-    # endpoint_api_url: Optional[str] = None
+    prefer_protocol: Optional[str] = None
     max_new_tokens: Optional[int] = None
     throttle_delay: Optional[int] = None
     throttle_concurrency: Optional[int] = None
@@ -235,8 +233,8 @@ class APIClientModelEndpoint:
         if self.model.endpoint_protocol is not None:
             protocol = self.model.endpoint_protocol
             api_url = self.model.endpoint_api_url
-        if protocol is None and self.target_protocol is not None:
-            protocol = self.target_protocol
+        if protocol is None and self.prefer_protocol is not None:
+            protocol = self.prefer_protocol
             if protocol == self.endpoint.protocol:
                 api_url = self.endpoint.api_url
             elif (
@@ -382,7 +380,8 @@ class APIClientModelEndpoint:
                     sampling_params["max_tokens"] = max_completion_tokens
                 if (
                     self.model.model_path.startswith("openai/o3") or
-                    self.model.model_path.startswith("openai/o4")
+                    self.model.model_path.startswith("openai/o4") or
+                    self.model.model_path.startswith("openai/gpt-5")
                 ):
                     max_tokens = sampling_params.pop("max_tokens", None)
                     if max_tokens is not None:
@@ -635,7 +634,7 @@ class APIClientModelEndpoint:
                 raise ValueError(f"not implemented: anthropic response type = {repr(res_type)}")
             role = res.payload.pop("role")
             res_content = res.payload.pop("content")
-            res_stop_sequence = res.payload.pop("stop_sequence", None)
+            _res_stop_sequence = res.payload.pop("stop_sequence", None)
             res_stop_reason = res.payload.pop("stop_reason", None)
             if res_stop_reason is None:
                 finish_reason = None
@@ -826,15 +825,21 @@ class APIClientModelEndpoint:
         messages: list[dict[str, Any]] = None,
         sampling_params: dict[str, Any] = None,
         tools: Optional[list] = None,
-        # payload: Any = None,
         api_version: Optional[str] = None,
         # debug: Optional[bool] = None,
+        worker: Any = None,
         res: Any = None,
     ):
         # print(f"DEBUG: APIClientModelEndpoint.message: model path = {self.model.model_path}")
         protocol, api_url = self.protocol_api_url()
         print(f"DEBUG: APIClientModelEndpoint.message: protocol = {protocol} api url = {api_url}")
         print(f"DEBUG: APIClientModelEndpoint.message: req url  = {self._endpoint_url}", flush=True)
+        req_headers = self._endpoint_headers.copy()
+        if protocol == "anthropic":
+            if api_version is not None:
+                req_headers["Anthropic-Version"] = api_version
+            else:
+                req_headers["Anthropic-Version"] = "2023-06-01"
         if protocol == "anthropic":
             req_body = dict()
             system_prompt = None
@@ -932,63 +937,17 @@ class APIClientModelEndpoint:
                 else:
                     req_body["thinking"]["budget_tokens"] = max(0, max_tokens - 1)
         print(f"DEBUG: APIClientModelEndpoint.message: req body = {req_body}", flush=True)
-        req_data = json.dumps(req_body).encode("utf-8")
-        req_headers = self._endpoint_headers.copy()
-        if protocol == "anthropic":
-            if api_version is not None:
-                req_headers["Anthropic-Version"] = api_version
-            else:
-                req_headers["Anthropic-Version"] = "2023-06-01"
-        hreq = urllib.request.Request(
+        worker._http_post(
             self._endpoint_url,
-            headers=req_headers,
-            data=req_data,
+            req_headers,
+            req_body,
+            res,
         )
-        res.t0 = datetime.utcnow().isoformat()
-        try:
-            with urllib.request.urlopen(hreq) as hres:
-                res_status = hres.status
-                res_data = hres.read()
-        except urllib.error.HTTPError as e:
-            err_status = e.code
-            res.t1 = datetime.utcnow().isoformat()
-            res.status = err_status
-            try:
-                err_body = json.loads(e.read().decode("utf-8"))
-                print(f"DEBUG: APIClientModelEndpoint.message: http err body = {err_body}", flush=True)
-                res.payload = err_body
-            except Exception:
-                pass
+        if not (res.status >= 200 and res.status < 300):
             return res
-        except urllib.error.URLError as e:
-            err_status = e.code
-            res.t1 = datetime.utcnow().isoformat()
-            res.status = err_status
-            try:
-                err_body = json.loads(e.read().decode("utf-8"))
-                print(f"DEBUG: APIClientModelEndpoint.message: url err body = {err_body}", flush=True)
-                res.payload = err_body
-            except Exception:
-                pass
-            return res
-        res.t1 = datetime.utcnow().isoformat()
-        res.status = res_status
-        res_body = json.loads(res_data.decode("utf-8"))
+        res_body = res.payload
         print(f"DEBUG: APIClientModelEndpoint.message: res body = {res_body}", flush=True)
         if protocol == "anthropic":
-            if False:
-                new_payload = dict()
-                res_id = res_body.pop("id", None)
-                res_type = res_body.pop("type", None)
-                res_model = res_body.pop("model", None)
-                if res_id is not None:
-                    new_payload["id"] = res_id
-                if res_type is not None:
-                    new_payload["type"] = res_type
-                if res_model is not None:
-                    new_payload["model"] = self.model.model_path
-                new_payload |= res_body
-                res.payload = new_payload
             res.payload = res_body
             res.payload["model"] = self.model.model_path
         elif protocol in (
@@ -1165,8 +1124,8 @@ def _try_chat_completion(work_item, endpoint_state: APIClientEndpointState):
         print(f"DEBUG: _try_chat_completion: except = {work_item.exc}")
     return work_item
 
-def _message(work_item, endpoint_state: APIClientEndpointState):
-    endpoint = APIClientModelEndpoint(work_item.model, target_protocol="anthropic")
+def _message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
+    endpoint = APIClientModelEndpoint(work_item.model, prefer_protocol="anthropic")
     t = datetime.utcnow()
     t0 = None
     if endpoint.throttle_delay is not None:
@@ -1181,21 +1140,21 @@ def _message(work_item, endpoint_state: APIClientEndpointState):
             time.sleep((t0 - t).total_seconds())
             t = datetime.utcnow()
     print(f"DEBUG: APIClient.message: t = {t.isoformat()} t0 = {t0.isoformat() if t0 is not None else None}")
-    work_item.res = APIMessageResponse()
+    work_item.res = APIMessageResult()
     endpoint.message(
         messages=work_item.messages,
         sampling_params=work_item.sampling_params,
         tools=work_item.tools,
-        # payload=work_item.payload,
         api_version=work_item.api_version,
         # debug=work_item.debug,
+        worker=worker,
         res=work_item.res,
     )
     return work_item
 
-def _try_message(work_item, endpoint_state: APIClientEndpointState):
+def _try_message(work_item, endpoint_state: APIClientEndpointState, worker: APIClientWorker):
     try:
-        _message(work_item, endpoint_state)
+        _message(work_item, endpoint_state, worker)
     # TODO: exc reporting.
     except Exception as e:
         # print(f"DEBUG: _try_message: except = {e}")
@@ -1221,6 +1180,79 @@ class APIClientWorker:
             )
 
 @dataclass
+class CurlAPIClientWorker(APIClientWorker):
+    def _http_post(self, url: str, headers: dict[str, str], payload, res):
+        cmd = ["curl"]
+        cmd.append("-L")
+        cmd.append(url)
+        cmd.append("-X")
+        cmd.append("POST")
+        for header_key, header_value in headers.items():
+            cmd.append("-H")
+            cmd.append(f"{header_key}: {header_value}")
+        cmd.append("-d")
+        cmd.append(json.dumps(payload))
+        cmd.append("-s")
+        cmd.append("-w")
+        cmd.append("%{stderr}%{http_code}")
+        res.t0 = datetime.utcnow().isoformat()
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            text=True,
+            encoding="utf-8",
+        )
+        out, err = proc.communicate()
+        print(f"DEBUG: CurlAPIClientWorker._http_post: out = {repr(out)}")
+        print(f"DEBUG: CurlAPIClientWorker._http_post: err = {repr(err)}")
+        res.t1 = datetime.utcnow().isoformat()
+        try:
+            res.status = int(err)
+        except ValueError:
+            res.status = -1
+        res_data = out.strip()
+        res_body = json.loads(res_data)
+        res.payload = res_body
+
+@dataclass
+class UrllibAPIClientWorker(APIClientWorker):
+    def _http_post(self, url: str, headers: dict[str, str], payload, res):
+        req_headers = headers
+        req_body = payload
+        req_data = json.dumps(req_body).encode("utf-8")
+        hreq = urllib.request.Request(
+            url,
+            headers = req_headers,
+            data = req_data,
+        )
+        res.t0 = datetime.utcnow().isoformat()
+        try:
+            with urllib.request.urlopen(hreq) as hres:
+                res_status = hres.status
+                res_data = hres.read()
+        except (urllib.error.HTTPError, urllib.error.URLError) as e:
+            err_status = e.code
+            res.t1 = datetime.utcnow().isoformat()
+            res.status = err_status
+            try:
+                err_body = json.loads(e.read().decode("utf-8"))
+                print(f"DEBUG: UrllibAPIClientWorker._http_post: err body = {err_body}")
+                res.payload = err_body
+            except Exception:
+                pass
+            return
+        except ValueError as e:
+            res.t1 = datetime.utcnow().isoformat()
+            res.status = -1
+            return
+        res.t1 = datetime.utcnow().isoformat()
+        res.status = res_status
+        res_body = json.loads(res_data.decode("utf-8"))
+        res.payload = res_body
+
+@dataclass
 class APIClient:
     registry: APIRegistry
     max_concurrency: int = 192
@@ -1237,7 +1269,8 @@ class APIClient:
         if self._journal is None:
             pass
         if self._worker is None:
-            self._worker = APIClientWorker(self.max_concurrency)
+            # self._worker = CurlAPIClientWorker(self.max_concurrency)
+            self._worker = UrllibAPIClientWorker(self.max_concurrency)
         if self._endpoint_state is None:
             self._endpoint_state = dict()
 
@@ -1281,7 +1314,6 @@ class APIClient:
         messages: Any = None,
         sampling_params: Optional[dict] = None,
         tools: Optional[list] = None,
-        # payload: Any = None,
         api_version: Optional[str] = None,
         fresh: Optional[bool] = None,
         debug: Optional[bool] = None,
@@ -1309,12 +1341,12 @@ class APIClient:
             api_version=api_version,
             # debug=debug,
         )
-        def _message_work_item(work_item, endpoint_state):
-            _try_message(work_item, endpoint_state)
+        def _message_work_item(work_item, endpoint_state, worker):
+            _try_message(work_item, endpoint_state, worker)
             return work_item
         loop = asyncio.get_running_loop()
         async with endpoint_state._max_concurrency:
-            w = loop.run_in_executor(self._worker._poolexec, _message_work_item, work_item, endpoint_state)
+            w = loop.run_in_executor(self._worker._poolexec, _message_work_item, work_item, endpoint_state, self._worker)
             work_item = await w
         res = work_item._finalize()
         if self._journal is not None:

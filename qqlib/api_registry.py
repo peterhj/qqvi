@@ -3,13 +3,6 @@ from dataclasses import dataclass, field
 import os
 
 @dataclass
-class OpenaiModel:
-    id: str = None
-    created: int = None
-    object: str = "model"
-    owned_by: str = None
-
-@dataclass
 class APIEndpoint:
     name: str = None
     domain: str = None
@@ -33,13 +26,6 @@ class APIModel:
     throttle_rps: Optional[int] = None
     throttle_concurrency: Optional[int] = None
 
-    def to_openai(self) -> OpenaiModel:
-        return OpenaiModel(
-            id=self.model_path,
-            created=0,
-            owned_by=self.endpoint.domain,
-        )
-
 @dataclass
 class APIRegistry:
     environ: dict[str, str] = field(default_factory=dict)
@@ -51,7 +37,7 @@ class APIRegistry:
     def __post_init__(self):
         self._register_all()
 
-    def get_env(self, key: str) -> Optional[str]:
+    def get_env(self, key: str, rstrip: bool = True) -> Optional[str]:
         v = self.environ.get(key, None)
         if v is None:
             v = os.environ.get(key, None)
@@ -59,6 +45,8 @@ class APIRegistry:
                 # print(f"DEBUG: APIRegistry: warning: missing env var {repr(key)}")
                 pass
             else:
+                if rstrip:
+                    v = v.rstrip()
                 self.environ[key] = v
         return v
 
@@ -126,7 +114,7 @@ class APIRegistry:
                 domain="anthropic.com",
                 protocol="anthropic",
                 api_url="https://api.anthropic.com",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
             )
         api_key = self.get_env("DEEPINFRA_API_KEY")
         if api_key is not None:
@@ -135,7 +123,7 @@ class APIRegistry:
                 domain="deepinfra.com",
                 protocol="openai",
                 api_url="https://api.deepinfra.com",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
                 throttle_concurrency=192,
             )
         api_key = self.get_env("DEEPSEEK_API_KEY")
@@ -145,7 +133,7 @@ class APIRegistry:
                 domain="deepseek.com",
                 protocol="deepseek",
                 api_url="https://api.deepseek.com",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
                 protocol_api_urls={
                     "deepseek": "https://api.deepseek.com",
                     "anthropic": "https://api.deepseek.com/anthropic",
@@ -158,7 +146,7 @@ class APIRegistry:
                 domain="google.com",
                 protocol="gemini",
                 api_url="https://generativelanguage.googleapis.com",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
                 throttle_rps=2,
             )
         api_key = self.get_env("MOONSHOT_API_KEY")
@@ -168,7 +156,7 @@ class APIRegistry:
                 domain="moonshot.ai",
                 protocol="openai",
                 api_url="https://api.moonshot.ai",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
                 protocol_api_urls={
                     "openai": "https://api.moonshot.ai",
                     "anthropic": "https://api.moonshot.ai/anthropic",
@@ -182,7 +170,7 @@ class APIRegistry:
                 domain="openai.com",
                 protocol="openai",
                 api_url="https://api.openai.com",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
             )
         api_key = self.get_env("TOGETHER_API_KEY")
         if api_key is not None:
@@ -191,7 +179,7 @@ class APIRegistry:
                 domain="together.xyz",
                 protocol="openai",
                 api_url="https://api.together.xyz",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
                 throttle_rps=10,
             )
         api_key = self.get_env("XAI_API_KEY")
@@ -201,7 +189,7 @@ class APIRegistry:
                 domain="x.ai",
                 protocol="openai",
                 api_url="https://api.x.ai",
-                api_key=api_key.rstrip(),
+                api_key=api_key,
             )
         self.register_endpoint(
             "__local__",
@@ -271,6 +259,28 @@ class APIRegistry:
             "anthropic/claude-4.5-sonnet-thinking-32k",
             ["anthropic/claude-4.5-sonnet-thinking-on-32k"],
             endpoint_model_path="claude-sonnet-4-5-20250929",
+            endpoint_extra_params={
+                "thinking": {
+                    "type": "enabled",
+                    "budget_tokens": 32000,
+                },
+            },
+        )
+        self.register_model(
+            "anthropic",
+            "anthropic/claude-4.5-opus-thinking-off",
+            endpoint_model_path="claude-opus-4-5-20251101",
+            endpoint_extra_params={
+                "thinking": {
+                    "type": "disabled",
+                },
+            },
+        )
+        self.register_model(
+            "anthropic",
+            "anthropic/claude-4.5-opus-thinking-32k",
+            ["anthropic/claude-4.5-opus-thinking-on-32k"],
+            endpoint_model_path="claude-opus-4-5-20251101",
             endpoint_extra_params={
                 "thinking": {
                     "type": "enabled",
@@ -566,25 +576,21 @@ class APIRegistry:
         self.register_model(
             "openai",
             "openai/gpt-4o-mini",
-            ["gpt-4o-mini"],
             endpoint_model_path="gpt-4o-mini-2024-07-18",
         )
         self.register_model(
             "openai",
             "openai/gpt-4o-20240806",
-            ["gpt-4o-20240806"],
             endpoint_model_path="gpt-4o-2024-08-06",
         )
         self.register_model(
             "openai",
             "openai/gpt-4.1",
-            ["gpt-4.1"],
             endpoint_model_path="gpt-4.1-2025-04-14",
         )
         self.register_model(
             "openai",
             "openai/o3-high",
-            ["o3-high"],
             endpoint_model_path="o3-2025-04-16",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -593,7 +599,6 @@ class APIRegistry:
         self.register_model(
             "openai",
             "openai/o4-mini-high",
-            ["o4-mini-high"],
             endpoint_model_path="o4-mini-2025-04-16",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -601,9 +606,27 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/gpt-5",
-            ["gpt-5"],
+            "openai/gpt-5-high",
             endpoint_model_path="gpt-5-2025-08-07",
+            endpoint_extra_params={
+                "reasoning_effort": "high",
+            },
+        )
+        self.register_model(
+            "openai",
+            "openai/gpt-5.1-high",
+            endpoint_model_path="gpt-5.1-2025-11-13",
+            endpoint_extra_params={
+                "reasoning_effort": "high",
+            },
+        )
+        self.register_model(
+            "openai",
+            "openai/gpt-5.2-high",
+            endpoint_model_path="gpt-5.2-2025-12-11",
+            endpoint_extra_params={
+                "reasoning_effort": "high",
+            },
         )
 
     def _register_together_models(self):
@@ -632,14 +655,12 @@ class APIRegistry:
         self.register_model(
             "x-ai",
             "x-ai/grok-3-mini",
-            ["grok-3-mini"],
             endpoint_model_path="grok-3-mini",
             throttle_rps=8,
         )
         self.register_model(
             "x-ai",
             "x-ai/grok-4",
-            ["grok-4"],
             endpoint_model_path="grok-4-0709",
             throttle_rps=8,
         )
