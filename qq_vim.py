@@ -159,7 +159,7 @@ class InferenceLog:
 
         res_body = res.result()
         res_message = res.message()
-        thinking = Message.get_thinking(res_message)
+        thinking = Message.get_thinking_part(res_message)
         response = Message.get_text(res_message)
 
         log_item = {
@@ -190,26 +190,27 @@ class InferenceLog:
             os.symlink(log_meta[log_dir].log_name, log_meta[log_dir].log_link)
 
         if response.find(chr(0x11)) >= 0:
-            print(f"DEBUG: found control char in response (0x11)")
+            print(f"DEBUG: qq: found control char in response (0x11)")
             return
         if response.find(chr(0x01)) >= 0:
-            print(f"DEBUG: found control char in response (0x01)")
+            print(f"DEBUG: qq: found control char in response (0x01)")
             return
 
         with open(src_path, "a") as f:
             print(f"\n\n{AA_PAT}", file=f)
-            if messages[-1]["role"] == "assistant":
-                if "reasoning_content" in messages[-1]:
-                    print("<think>\n{}\n</think>\n".format(messages[-1]["reasoning_content"]), end="", file=f)
-                print(messages[-1]["content"], end="", file=f)
             if thinking:
-                print("<think>", file=f)
-                thinking_end = len(thinking)
-                if len(thinking) >= 2 and thinking[-2:] == "\n\n":
+                thinking_sign = thinking.get("signature", None)
+                if thinking_sign is not None:
+                    print(f"<think={thinking_sign}>", file=f)
+                else:
+                    print("<think>", file=f)
+                thinking_text = thinking["thinking"]
+                thinking_end = len(thinking_text)
+                if len(thinking_text) >= 2 and thinking_text[-2:] == "\n\n":
                     thinking_end = thinking_end - 2
-                elif len(thinking) >= 1 and thinking[-1:] == "\n":
+                elif len(thinking_text) >= 1 and thinking_text[-1:] == "\n":
                     thinking_end = thinking_end - 1
-                print(thinking[:thinking_end], file=f)
+                print(thinking_text[:thinking_end], file=f)
                 print("</think>\n", file=f)
             print(response, file=f)
             if len(response) > 0 and response[-1] != "\n":
@@ -231,15 +232,15 @@ class InferenceLog:
 
 def main():
     if len(sys.argv) <= 1:
-        print(f"DEBUG: no src")
+        print(f"DEBUG: qq: no src")
         return
 
     if len(sys.argv) <= 2:
         if "default" not in CONF:
-            print(f"DEBUG: no default")
+            print(f"DEBUG: qq: no default")
             return
         if "model" not in CONF["default"]:
-            print(f"DEBUG: no default model")
+            print(f"DEBUG: qq: no default model")
             return
         model = CONF["default"]["model"]
     else:
@@ -255,7 +256,7 @@ def main():
     model_path = model
     model = services.registry.find_model(model_path)
     if model is None:
-        print(f"DEBUG: unsupported model = {repr(model_path)}")
+        print(f"DEBUG: qq: unsupported model = {repr(model_path)}")
         return
 
     with open(sys.argv[1], "r") as f:
@@ -269,7 +270,7 @@ def main():
     if qq_pos > 0:
         y_text = haystack[:qq_pos].strip()
     if y_text:
-        print(f"DEBUG: message[{len(messages)}]: role = \"system\"")
+        print(f"DEBUG: qq: message[{len(messages)}]: role = \"system\"")
         messages.append({
             "role": "system",
             "content": y_text,
@@ -286,7 +287,7 @@ def main():
         else:
             q_end = aa_pos
         q_text = haystack[:q_end].strip()
-        print(f"DEBUG: message[{len(messages)}]: role = \"user\"")
+        print(f"DEBUG: qq: message[{len(messages)}]: role = \"user\"")
         messages.append({
             "role": "user",
             "content": q_text,
@@ -302,14 +303,51 @@ def main():
         else:
             a_end = qq_pos
         a_text = haystack[:a_end].strip()
-        print(f"DEBUG: message[{len(messages)}]: role = \"assistant\"")
-        messages.append({
-            "role": "assistant",
-            "content": a_text,
-        })
+        print(f"DEBUG: qq: message[{len(messages)}]: role = \"assistant\"")
+        a_think = False
+        a_thinking_sign = None
+        if a_text.startswith("<think="):
+            start_think_end_pos = a_text.find(">", 7)
+            if start_think_end_pos >= 0:
+                a_thinking_sign = a_text[7:start_think_end_pos]
+            else:
+                a_thinking_sign = a_text[7:]
+            print(f"DEBUG: qq: message[{len(messages)}]: thinking signature = {repr(a_thinking_sign)}")
+            a_think = True
+        elif a_text.startswith("<think>"):
+            a_think = True
+        if a_think:
+            end_think_pos = a_text.find("</think>")
+            if end_think_pos >= 0:
+                a_thinking_text = a_text[start_think_end_pos:end_think_pos].strip()
+                a_text = a_text[end_think_pos:].lstrip()
+            else:
+                a_thinking_text = a_text[start_think_end_pos:].strip()
+                a_text = None
+            content = []
+            if a_text is not None:
+                content.append({
+                    "type": "text",
+                    "text": a_text,
+                })
+            content.append({
+                "type": "thinking",
+                "thinking": a_thinking_text,
+            })
+            if a_thinking_sign is not None:
+                content[-1]["signature"] = a_thinking_sign
+            messages.append({
+                "role": "assistant",
+                "content": content,
+            })
+        else:
+            messages.append({
+                "role": "assistant",
+                "content": a_text,
+            })
 
     if len(messages) <= 0:
-        print(f"DEBUG: no messages")
+        print(f"DEBUG: qq: no messages")
         return
 
     async def _run(services, model):
@@ -317,7 +355,7 @@ def main():
         try:
             await endpoint.query(messages, sys.argv[1])
         except Exception as e:
-            print(f"DEBUG: endpoint query: except: {e}")
+            print(f"DEBUG: qq: endpoint query: except: {e}")
             print(traceback.format_exc())
     asyncio.run(_run(services, model))
 
