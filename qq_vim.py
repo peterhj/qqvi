@@ -310,11 +310,14 @@ def main():
             start_think_end_pos = a_text.find(">", 7)
             if start_think_end_pos >= 0:
                 a_thinking_sign = a_text[7:start_think_end_pos]
+                start_think_end_pos += 1
             else:
                 a_thinking_sign = a_text[7:]
+                start_think_end_pos = len(a_text)
             print(f"DEBUG: qq: message[{len(messages)}]: thinking signature = {repr(a_thinking_sign)}")
             a_think = True
         elif a_text.startswith("<think>"):
+            start_think_end_pos = 7
             a_think = True
         if a_think:
             end_think_pos = a_text.find("</think>")
