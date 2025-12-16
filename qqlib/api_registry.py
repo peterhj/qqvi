@@ -590,7 +590,7 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/o3-high",
+            "openai/o3-thinking-high",
             endpoint_model_path="o3-2025-04-16",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -598,7 +598,7 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/o4-mini-high",
+            "openai/o4-mini-thinking-high",
             endpoint_model_path="o4-mini-2025-04-16",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -606,7 +606,7 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/gpt-5-high",
+            "openai/gpt-5-thinking-high",
             endpoint_model_path="gpt-5-2025-08-07",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -614,7 +614,7 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/gpt-5.1-high",
+            "openai/gpt-5.1-thinking-high",
             endpoint_model_path="gpt-5.1-2025-11-13",
             endpoint_extra_params={
                 "reasoning_effort": "high",
@@ -622,10 +622,18 @@ class APIRegistry:
         )
         self.register_model(
             "openai",
-            "openai/gpt-5.2-high",
+            "openai/gpt-5.2-thinking-high",
             endpoint_model_path="gpt-5.2-2025-12-11",
             endpoint_extra_params={
                 "reasoning_effort": "high",
+            },
+        )
+        self.register_model(
+            "openai",
+            "openai/gpt-5.2-thinking-xhigh",
+            endpoint_model_path="gpt-5.2-2025-12-11",
+            endpoint_extra_params={
+                "reasoning_effort": "xhigh",
             },
         )
 
