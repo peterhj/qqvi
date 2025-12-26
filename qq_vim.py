@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 from typing import Any, Optional
-from argparse import Namespace
 from configparser import ConfigParser, SectionProxy
 from dataclasses import dataclass
 from datetime import datetime
+from types import SimpleNamespace
 import asyncio
 import json
 import os
@@ -102,7 +102,7 @@ class InferenceLog:
         log_meta = dict()
 
         for log_dir in log_dirs:
-            log_meta[log_dir] = Namespace(**{
+            log_meta[log_dir] = SimpleNamespace(**{
                 "base_dir": None,
                 "log_name": None,
                 "log_path": None,
@@ -233,43 +233,63 @@ class InferenceLog:
 def main():
     if len(sys.argv) <= 1:
         print(f"DEBUG: qq: no src")
-        return
+        sys.exit(1)
 
+    args = SimpleNamespace()
     if len(sys.argv) <= 2:
         if "default" not in CONF:
             print(f"DEBUG: qq: no default")
-            return
+            sys.exit(1)
         if "model" not in CONF["default"]:
             print(f"DEBUG: qq: no default model")
-            return
-        model = CONF["default"]["model"]
+            sys.exit(1)
+        args.default_model = CONF["default"]["model"]
     else:
-        model = sys.argv[2]
-
-    if (
-        "aliases" in CONF and
-        model in CONF["aliases"]
-    ):
-        model = CONF["aliases"][model]
-
-    services = APIServices()
-    model_path = model
-    model = services.registry.find_model(model_path)
-    if model is None:
-        print(f"DEBUG: qq: unsupported model = {repr(model_path)}")
-        return
+        args.default_model = sys.argv[2]
+    args.aliases = CONF["aliases"]
 
     with open(sys.argv[1], "r") as f:
         haystack = f.read()
 
+    y_slash = dict()
     y_text = None
+    q_slash = dict()
     qq_pos = haystack.find(QQ_PAT)
     aa_pos = -1
     messages = []
 
+    SLASHES = [
+        "/setmodel",
+        "/setthink",
+        "/model",
+        "/think",
+    ]
+
+    def _parse_slash_text(slash, text):
+        while text.startswith("/"):
+            f = False
+            for prefix in SLASHES:
+                if text.startswith(prefix):
+                    text = text.removeprefix(prefix).lstrip()
+                    parts = text.split(maxsplit=1)
+                    slash[prefix] = parts[0]
+                    if len(parts) > 1:
+                        text = parts[1]
+                    else:
+                        text = ""
+                    f = True
+                    break
+            if f:
+                continue
+            parts = text.split(maxsplit=1)
+            print(f"DEBUG: qq: unsupported slash: {repr(parts[0])}")
+            sys.exit(1)
+        return text
+
     if qq_pos > 0:
         y_text = haystack[:qq_pos].strip()
     if y_text:
+        y_text = _parse_slash_text(y_slash, y_text)
         print(f"DEBUG: qq: message[{len(messages)}]: role = \"system\"")
         messages.append({
             "role": "system",
@@ -287,6 +307,7 @@ def main():
         else:
             q_end = aa_pos
         q_text = haystack[:q_end].strip()
+        q_text = _parse_slash_text(q_slash, q_text)
         print(f"DEBUG: qq: message[{len(messages)}]: role = \"user\"")
         messages.append({
             "role": "user",
@@ -351,7 +372,46 @@ def main():
 
     if len(messages) <= 0:
         print(f"DEBUG: qq: no messages")
-        return
+        sys.exit(1)
+
+    if messages[-1]["role"] != "user":
+        print(f"DEBUG: qq: final message must be 'user' role")
+        sys.exit(1)
+
+    final_slash = y_slash | q_slash
+    print(f"DEBUG: qq: slash = {final_slash}")
+
+    model = args.default_model
+    think = None
+
+    for slashkey, slashvalue in final_slash.items():
+        if (
+            slashkey == "/setmodel" or
+            slashkey == "/model"
+        ):
+            if slashvalue == "default":
+                model = args.default_model
+            else:
+                model = slashvalue
+        if (
+            slashkey == "/setthink" or
+            slashkey == "/think"
+        ):
+            v = slashvalue.lower()
+            if v == "off" or v == "false":
+                think = False
+            elif v == "on" or v == "true":
+                think = True
+
+    if args.aliases and model in args.aliases:
+        model = args.aliases[model]
+
+    services = APIServices()
+    model_path = model
+    model = services.registry.find_model(model_path)
+    if model is None:
+        print(f"DEBUG: qq: unsupported model = {repr(model_path)}")
+        sys.exit(1)
 
     async def _run(services, model):
         endpoint = InferenceLog(services, model)
